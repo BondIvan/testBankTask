@@ -1,0 +1,155 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_tables
+      author: boiv
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: CHAR(36)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: ENUM('ADMIN', 'USER')
+                  constraints:
+                    nullable: false
+                  defaultValue: "USER"
+
+        - createTable:
+            tableName: cards
+            columns:
+              - column:
+                  name: id
+                  type: CHAR(36)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: encrypted_number
+                  type: VARBINARY(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: masked_number
+                  type: VARCHAR(19)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: owner_id
+                  type: CHAR(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expiration_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: ENUM('ACTIVE', 'BLOCKED', 'EXPIRED')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: DECIMAL(15, 2)
+                  constraints:
+                    nullable: false
+                  defaultValue: "0.00"
+        - addForeignKeyConstraint:
+            baseTableName: cards
+            baseColumnNames: owner_id
+            constraintName: fk_card_owner
+            referencedTableName: users
+            referencedColumnNames: id
+
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: CHAR(36)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: amount
+                  type: DECIMAL(15, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: ENUM('REPLENISHMENT', 'WRITE_OFF')
+                  constraints:
+                    nullable: false
+              - column:
+                  name: from_card_id
+                  type: CHAR(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: to_card_id
+                  type: CHAR(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: from_card_id
+            constraintName: fk_transaction_from_card
+            referencedTableName: cards
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: to_card_id
+            constraintName: fk_transaction_to_card
+            referencedTableName: cards
+            referencedColumnNames: id
+
+        - createTable:
+            tableName: limits
+            columns:
+              - column:
+                  name: id
+                  type: CHAR(36)
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: card_id
+                  type: CHAR(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: limit_type
+                  type: ENUM('DAILY', 'MONTHLY')
+                  constraints:
+                    nullable: true
+              - column:
+                  name: max_amount
+                  type: DECIMAL(15, 2)
+                  constraints:
+                    nullable: true
+        - addForeignKeyConstraint:
+            baseTableName: limits
+            baseColumnNames: card_id
+            constraintName: fk_limit_card
+            referencedTableName: cards
+            referencedColumnNames: id
