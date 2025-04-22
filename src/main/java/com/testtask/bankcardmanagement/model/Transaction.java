@@ -36,7 +36,7 @@ public class Transaction {
     private Card fromCard;
 
     @ManyToOne
-    @Column(name = "to_card_id", nullable = false)
+    @JoinColumn(name = "to_card_id", nullable = false)
     private Card toCard;
 
     @Column(name = "transaction_date", nullable = false)
