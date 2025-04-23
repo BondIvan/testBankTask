@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - changeSet:
+      id: drop-masked-number-column
+      author: boiv
+      changes:
+        - dropColumn:
+            tableName: cards
+            columnName: masked_number

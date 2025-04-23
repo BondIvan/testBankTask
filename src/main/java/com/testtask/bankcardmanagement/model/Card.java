@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -24,11 +25,8 @@ public class Card {
     @GeneratedValue(generator = "UUID")
     private UUID id;
 
-    @Column(name = "encrypted_number", nullable = false, columnDefinition = "VARBINARY(255)")
-    private byte[] encryptedNumber;
-
-    @Column(name = "masked_number", nullable = false)
-    private String maskedNumber;
+    @Column(name = "encrypted_number", nullable = false)
+    private String encryptedNumber;
 
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
@@ -46,8 +44,8 @@ public class Card {
 
     @Override
     public String toString() {
-        return String.format("encryptedNumber: %s, maskedNumber: %s, expirationDate: %s, status: %s, balance: %.2f",
-                encryptedNumber, maskedNumber, expirationDate, status, balance);
+        return String.format("encryptedNumber: %s, expirationDate: %s, status: %s, balance: %.2f",
+                encryptedNumber, expirationDate, status, balance);
     }
 
     @Override
@@ -56,12 +54,11 @@ public class Card {
         if (o == null || getClass() != o.getClass()) return false;
         Card card = (Card) o;
         return Objects.equals(encryptedNumber, card.encryptedNumber)
-                && Objects.equals(maskedNumber, card.maskedNumber)
                 && Objects.equals(expirationDate, card.expirationDate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(encryptedNumber, maskedNumber, expirationDate);
+        return Objects.hash(encryptedNumber, expirationDate);
     }
 }

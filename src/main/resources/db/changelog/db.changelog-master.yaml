@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: db/changelog/changeset/initial_schema.yaml
+  - include:
+      file: db/changelog/changeset/drop_masked_number.yaml
