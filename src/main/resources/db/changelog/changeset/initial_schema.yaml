@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: create_tables
+      id: create-tables
       author: boiv
       changes:
         - createTable:
@@ -8,15 +8,17 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: CHAR(36)
+                  type: BIGINT
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
+                    nullable: false
               - column:
                   name: email
                   type: VARCHAR(255)
                   constraints:
-                    unique: true
                     nullable: false
+                    unique: true
               - column:
                   name: password
                   type: VARCHAR(255)
@@ -24,32 +26,23 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: role
-                  type: ENUM('ADMIN', 'USER')
+                  type: VARCHAR(255)
                   constraints:
                     nullable: false
-                  defaultValue: "USER"
 
         - createTable:
             tableName: cards
             columns:
               - column:
                   name: id
-                  type: CHAR(36)
+                  type: BIGINT
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
+                    nullable: false
               - column:
                   name: encrypted_number
-                  type: VARBINARY(255)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: masked_number
-                  type: VARCHAR(19)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: owner_id
-                  type: CHAR(36)
+                  type: VARCHAR(255)
                   constraints:
                     nullable: false
               - column:
@@ -58,98 +51,110 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: owner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
                   name: status
-                  type: ENUM('ACTIVE', 'BLOCKED', 'EXPIRED')
+                  type: VARCHAR(255)
                   constraints:
                     nullable: false
               - column:
                   name: balance
-                  type: DECIMAL(15, 2)
+                  type: DECIMAL(15,2)
                   constraints:
                     nullable: false
-                  defaultValue: "0.00"
-        - addForeignKeyConstraint:
-            baseTableName: cards
-            baseColumnNames: owner_id
-            constraintName: fk_card_owner
-            referencedTableName: users
-            referencedColumnNames: id
-
-        - createTable:
-            tableName: transactions
-            columns:
-              - column:
-                  name: id
-                  type: CHAR(36)
-                  constraints:
-                    primaryKey: true
-              - column:
-                  name: amount
-                  type: DECIMAL(15, 2)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: type
-                  type: ENUM('REPLENISHMENT', 'WRITE_OFF')
-                  constraints:
-                    nullable: false
-              - column:
-                  name: from_card_id
-                  type: CHAR(36)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: to_card_id
-                  type: CHAR(36)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: transaction_date
-                  type: TIMESTAMP
-                  constraints:
-                    nullable: false
-              - column:
-                  name: description
-                  type: TEXT
-        - addForeignKeyConstraint:
-            baseTableName: transactions
-            baseColumnNames: from_card_id
-            constraintName: fk_transaction_from_card
-            referencedTableName: cards
-            referencedColumnNames: id
-        - addForeignKeyConstraint:
-            baseTableName: transactions
-            baseColumnNames: to_card_id
-            constraintName: fk_transaction_to_card
-            referencedTableName: cards
-            referencedColumnNames: id
 
         - createTable:
             tableName: limits
             columns:
               - column:
                   name: id
-                  type: CHAR(36)
+                  type: BIGINT
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
+                    nullable: false
               - column:
                   name: card_id
-                  type: CHAR(36)
+                  type: BIGINT
                   constraints:
                     nullable: false
               - column:
                   name: limit_type
-                  type: ENUM('DAILY', 'MONTHLY')
-                  constraints:
-                    nullable: true
+                  type: VARCHAR(255)
               - column:
                   name: max_amount
-                  type: DECIMAL(15, 2)
+                  type: DECIMAL(15,2)
+
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
                   constraints:
-                    nullable: true
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: amount
+                  type: DECIMAL(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: from_card_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: to_card_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transaction_date
+                  type: datetime
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+
+  - changeSet:
+      id: add-foreign-keys
+      author: your_name
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: cards
+            baseColumnNames: owner_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_cards_users
+
         - addForeignKeyConstraint:
             baseTableName: limits
             baseColumnNames: card_id
-            constraintName: fk_limit_card
             referencedTableName: cards
             referencedColumnNames: id
+            constraintName: fk_limits_cards
+
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: from_card_id
+            referencedTableName: cards
+            referencedColumnNames: id
+            constraintName: fk_transactions_from_card
+
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: to_card_id
+            referencedTableName: cards
+            referencedColumnNames: id
+            constraintName: fk_transactions_to_card

@@ -10,9 +10,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -22,8 +20,8 @@ import java.util.UUID;
 @Entity
 public class Card {
     @Id
-    @GeneratedValue(generator = "UUID")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "encrypted_number", nullable = false)
     private String encryptedNumber;
