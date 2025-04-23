@@ -1,6 +1,5 @@
 package com.testtask.bankcardmanagement.model.dto;
 
-import com.testtask.bankcardmanagement.model.User;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -16,5 +15,5 @@ public record CardRequest(
         LocalDate expirationDate,
 
         @NotNull
-        User owner
+        String ownerEmail
 ) { }

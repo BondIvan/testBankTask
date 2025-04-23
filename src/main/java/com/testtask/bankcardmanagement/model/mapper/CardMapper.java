@@ -2,8 +2,8 @@ package com.testtask.bankcardmanagement.model.mapper;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.model.Card;
-import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,21 +11,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class CardMapper {
     private final AESEncryption aesEncryption;
-
-    public Card fromCardRequest(CardRequest cardRequest) {
-        Card card = new Card();
-        card.setEncryptedNumber(aesEncryption.encrypt(cardRequest.cardNumber()));
-        card.setUser(cardRequest.owner());
-        card.setExpirationDate(cardRequest.expirationDate());
-
-        return card;
-    }
+    private final UserMapper userMapper;
 
     public CardResponse toCardResponse(Card card) {
+        UserResponse userResponse = userMapper.toUserResponse(card.getUser());
         return new CardResponse(
                 maskCardNumber(card.getEncryptedNumber()),
                 card.getExpirationDate(),
-                card.getUser(),
+                userResponse,
                 card.getStatus(),
                 card.getBalance()
         );
