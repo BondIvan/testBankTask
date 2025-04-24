@@ -12,6 +12,7 @@ import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -50,6 +51,30 @@ public class CardServiceImpl implements CardService {
         } catch (DataIntegrityViolationException e) {
             throw new RuntimeException("A card with this number already exists in the database.");
         }
+    }
+
+    @Override
+    public Page<CardResponse> getAllCards(CardStatus cardStatus, int page, int size, List<String> sortList, String sortOrder) {
+        List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
+        Page<Card> filteredCardsByStatus = (cardStatus != null) ?
+                cardRepository.findByStatus(cardStatus, pageable) :
+                cardRepository.findAll(pageable);
+
+        return new PageImpl<>(
+                filteredCardsByStatus.stream()
+                        .map(cardMapper::toCardResponse)
+                        .toList(),
+                pageable,
+                filteredCardsByStatus.getSize()
+        );
+    }
+
+    private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
+        return sortList.stream()
+                .map(field -> new Sort.Order(sortDirection, field))
+                .toList();
     }
 
     private boolean isCardNumberDuplicate(User user, String cardNumber) {

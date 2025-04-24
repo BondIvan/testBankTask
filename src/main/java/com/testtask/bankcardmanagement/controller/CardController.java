@@ -2,12 +2,17 @@ package com.testtask.bankcardmanagement.controller;
 
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -21,10 +26,19 @@ public class CardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-//    @GetMapping("/admin/cards")
-//    public Page<CardResponse> getAllCards() {
-//
-//    }
+    @GetMapping("/admin/cards")
+    public ResponseEntity<Page<CardResponse>> getAllCards(
+            @RequestParam(defaultValue = "") CardStatus cardStatus,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") List<String> sortList,
+            @RequestParam(defaultValue = "ASC") String sortOrder
+            )
+    {
+        return ResponseEntity.ok(
+                cardService.getAllCards(cardStatus, page, size, sortList, sortOrder)
+        );
+    }
 
 //    @PutMapping("/admin/cards/{cardId}/block")
 //    public ResponseEntity<CardResponse> blockingCard(@PathVariable("cardId") String uuidCard) {
