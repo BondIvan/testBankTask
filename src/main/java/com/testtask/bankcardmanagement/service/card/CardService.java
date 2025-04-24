@@ -1,15 +1,13 @@
 package com.testtask.bankcardmanagement.service.card;
 
+import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
-import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
 public interface CardService {
     CardResponse createCard(CardRequest cardRequest);
-    Page<CardResponse> getAllCards(CardStatus cardStatus, int page, int size, List<String> sortList, String sortOrder);
+    Page<CardResponse> getAllCards(CardParamFilter cardParamFilter, int page, int size, List<String> sortList, String sortOrder);
 }

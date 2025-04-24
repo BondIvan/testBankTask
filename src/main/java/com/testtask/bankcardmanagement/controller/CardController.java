@@ -1,5 +1,6 @@
 package com.testtask.bankcardmanagement.controller;
 
+import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
@@ -28,7 +29,7 @@ public class CardController {
 
     @GetMapping("/admin/cards")
     public ResponseEntity<Page<CardResponse>> getAllCards(
-            @RequestParam(defaultValue = "") CardStatus cardStatus,
+            @RequestBody() CardParamFilter paramFilter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") List<String> sortList,
@@ -36,7 +37,7 @@ public class CardController {
             )
     {
         return ResponseEntity.ok(
-                cardService.getAllCards(cardStatus, page, size, sortList, sortOrder)
+                cardService.getAllCards(paramFilter, page, size, sortList, sortOrder)
         );
     }
 

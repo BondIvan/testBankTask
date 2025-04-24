@@ -3,8 +3,10 @@ package com.testtask.bankcardmanagement.service.card.impl;
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
+import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
@@ -13,9 +15,11 @@ import com.testtask.bankcardmanagement.service.card.CardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,20 +58,19 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public Page<CardResponse> getAllCards(CardStatus cardStatus, int page, int size, List<String> sortList, String sortOrder) {
+    public Page<CardResponse> getAllCards(CardParamFilter cardParamFilter, int page, int size, List<String> sortList, String sortOrder) {
         List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
-        Page<Card> filteredCardsByStatus = (cardStatus != null) ?
-                cardRepository.findByStatus(cardStatus, pageable) :
-                cardRepository.findAll(pageable);
+        Specification<Card> cardSpec = CardSpecification.build(cardParamFilter);
+
+        List<CardResponse> foundCards = cardRepository.findAll(cardSpec, pageable).stream()
+                .map(cardMapper::toCardResponse)
+                .toList();
 
         return new PageImpl<>(
-                filteredCardsByStatus.stream()
-                        .map(cardMapper::toCardResponse)
-                        .toList(),
+                foundCards,
                 pageable,
-                filteredCardsByStatus.getSize()
-        );
+                foundCards.size());
     }
 
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
@@ -79,7 +82,6 @@ public class CardServiceImpl implements CardService {
 
     private boolean isCardNumberDuplicate(User user, String cardNumber) {
         List<String> userCards = cardRepository.findEncryptedNumberByUserId(user.getId());
-        System.out.println("UserId: " + user.getId() + "userCards: " + userCards);
         return userCards.stream()
                 .map(aesEncryption::decrypt)
                 .anyMatch(number -> number.equals(cardNumber));
