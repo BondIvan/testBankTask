@@ -1,5 +1,8 @@
 package com.testtask.bankcardmanagement.service.user.impl;
 
+import com.testtask.bankcardmanagement.exception.SomeDBException;
+import com.testtask.bankcardmanagement.exception.UserDuplicateException;
+import com.testtask.bankcardmanagement.exception.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.user.UserRequest;
 import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
@@ -25,7 +28,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse createUser(UserRequest userRequest) {
         if(userRepository.existsByEmail(userRequest.email()))
-            throw new RuntimeException("A user with this email already exists.");
+            throw new UserDuplicateException("A user with this email already exists.");
 
         User user = new User();
         user.setEmail(userRequest.email());
@@ -36,7 +39,7 @@ public class UserServiceImpl implements UserService {
             User savedUser = userRepository.save(user);
             return userMapper.toUserResponse(savedUser);
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("A user with this email already exists in the database.");
+            throw new SomeDBException("A user with this email already exists in the database. " + e.getMessage(), e);
         }
     }
 
@@ -44,7 +47,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUserByEmail(String email) {
         Optional<User> optionalUser = userRepository.findUserByEmail(email);
         if(optionalUser.isEmpty())
-            throw new RuntimeException("User with such email [" + email + "] not found");
+            throw new UserNotFoundException("User with such email not found");
 
         User user = optionalUser.get();
         return userMapper.toUserResponse(user);

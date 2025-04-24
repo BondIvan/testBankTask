@@ -1,6 +1,9 @@
 package com.testtask.bankcardmanagement.service.card.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
+import com.testtask.bankcardmanagement.exception.CardDuplicateException;
+import com.testtask.bankcardmanagement.exception.SomeDBException;
+import com.testtask.bankcardmanagement.exception.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
@@ -35,12 +38,12 @@ public class CardServiceImpl implements CardService {
     public CardResponse createCard(CardRequest cardRequest) {
         Optional<User> optionalUser = userRepository.findUserByEmail(cardRequest.ownerEmail());
         if(optionalUser.isEmpty())
-            throw new RuntimeException("User with such email not found");
+            throw new UserNotFoundException("User with such email not found.");
 
         User owner = optionalUser.get();
 
         if(isCardNumberDuplicate(owner, cardRequest.cardNumber()))
-            throw new RuntimeException("A card with this number already exists.");
+            throw new CardDuplicateException("A card with this number already exists.");
 
         Card card = new Card();
         card.setUser(owner);
@@ -53,7 +56,7 @@ public class CardServiceImpl implements CardService {
             Card savedCard = cardRepository.save(card);
             return cardMapper.toCardResponse(savedCard);
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("A card with this number already exists in the database.");
+            throw new SomeDBException("A card with this number already exists in the database. " + e.getMessage(), e);
         }
     }
 

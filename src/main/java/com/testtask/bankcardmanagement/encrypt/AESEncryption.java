@@ -1,5 +1,6 @@
 package com.testtask.bankcardmanagement.encrypt;
 
+import com.testtask.bankcardmanagement.exception.encryption.AESEncryptionException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +42,7 @@ public class AESEncryption {
             System.arraycopy(iv, 0, concatenatedIvAndEncrypted, 0, iv.length);
             System.arraycopy(encrypted, 0, concatenatedIvAndEncrypted, iv.length, encrypted.length);
         } catch (Exception e) {
-            throw new RuntimeException("Encryption error: " + e.getMessage());
+            throw new AESEncryptionException("Encryption error: " + e.getMessage(), e);
         }
 
         String base64View = Base64.getEncoder().encodeToString(concatenatedIvAndEncrypted);
@@ -66,7 +67,7 @@ public class AESEncryption {
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmSpec);
             decrypted = cipher.doFinal(encryptText);
         } catch (Exception e) {
-            throw new RuntimeException("Decryption error: " + e.getMessage());
+            throw new AESEncryptionException("Decryption error: " + e.getMessage(), e);
         }
 
         // Clearing sensitive data from memory
