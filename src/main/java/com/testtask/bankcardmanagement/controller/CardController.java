@@ -1,24 +1,26 @@
 package com.testtask.bankcardmanagement.controller;
 
+import com.testtask.bankcardmanagement.exception.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
-import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/")
 public class CardController {
+    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "user.email", "status");
+
     private final CardService cardService;
 
     @PostMapping("/admin/cards")
@@ -36,9 +38,17 @@ public class CardController {
             @RequestParam(defaultValue = "ASC") String sortOrder
             )
     {
+        validateSortFields(sortList);
         return ResponseEntity.ok(
                 cardService.getAllCards(paramFilter, page, size, sortList, sortOrder)
         );
+    }
+
+    private void validateSortFields(List<String> sortList) {
+        sortList.forEach(field -> {
+            if(!SORTABLE_FIELDS.contains(field))
+                throw new InvalidSortFieldException("Sorting by this field is not supported.");
+        });
     }
 
 //    @PutMapping("/admin/cards/{cardId}/block")
