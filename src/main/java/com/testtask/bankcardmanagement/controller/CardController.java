@@ -51,20 +51,23 @@ public class CardController {
         });
     }
 
-//    @PutMapping("/admin/cards/{cardId}/block")
-//    public ResponseEntity<CardResponse> blockingCard(@PathVariable("cardId") String uuidCard) {
-//
-//    }
+    @PutMapping("/admin/cards/{cardId}/block")
+    public ResponseEntity<CardResponse> blockingCard(@PathVariable("cardId") Long id) {
+        CardResponse cardResponse = cardService.blockCard(id);
+        return ResponseEntity.ok(cardResponse);
+    }
 
-//    @PutMapping("/admin/cards/{cardId}/activate")
-//    public ResponseEntity<CardResponse> activatingCard(@PathVariable("cardId") String uuidCard) {
-//
-//    }
+    @PutMapping("/admin/cards/{cardId}/activate")
+    public ResponseEntity<CardResponse> activatingCard(@PathVariable("cardId") Long id) {
+        CardResponse cardResponse = cardService.activateCard(id);
+        return ResponseEntity.ok(cardResponse);
+    }
 
-//    @DeleteMapping("/admin/cards/{cardId}")
-//    public ResponseEntity<String> deleteCard(@PathVariable("cardID") String uuidCard) {
-//
-//    }
+    @DeleteMapping("/admin/cards/{cardId}")
+    public ResponseEntity<String> deleteCard(@PathVariable("cardId") Long id) {
+        cardService.deleteCard(id);
+        return ResponseEntity.ok("The card was successfully deleted");
+    }
 
 //    @PostMapping("admin/cards/{cardId}/limits")
 //    public ResponseEntity<CardResponse> setCardLimit(@PathVariable("cardId") String uuid, @RequestBody LimitType) {

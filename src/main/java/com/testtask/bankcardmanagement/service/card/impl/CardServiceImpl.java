@@ -1,9 +1,7 @@
 package com.testtask.bankcardmanagement.service.card.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
-import com.testtask.bankcardmanagement.exception.CardDuplicateException;
-import com.testtask.bankcardmanagement.exception.SomeDBException;
-import com.testtask.bankcardmanagement.exception.UserNotFoundException;
+import com.testtask.bankcardmanagement.exception.*;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
@@ -74,6 +72,60 @@ public class CardServiceImpl implements CardService {
                 foundCards,
                 pageable,
                 foundCards.size());
+    }
+
+    @Override
+    public CardResponse blockCard(Long id) {
+        Optional<Card> optionalCard = cardRepository.findById(id);
+        if(optionalCard.isEmpty())
+            throw new CardNotFoundException("A card with such id not found.");
+
+        Card card = optionalCard.get();
+        card.setStatus(CardStatus.BLOCKED);
+
+        try {
+            Card updatedCard = cardRepository.save(card);
+            return cardMapper.toCardResponse(updatedCard);
+        } catch (DataIntegrityViolationException e) {
+            throw new SomeDBException("DB Error updating card after status change. " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public CardResponse activateCard(Long id) {
+        Optional<Card> optionalCard = cardRepository.findById(id);
+        if(optionalCard.isEmpty())
+            throw new CardNotFoundException("A card with such id not found.");
+
+        Card card = optionalCard.get();
+        card.setStatus(CardStatus.ACTIVE);
+
+        try {
+            Card updatedCard = cardRepository.save(card);
+            return cardMapper.toCardResponse(updatedCard);
+        } catch (DataIntegrityViolationException e) {
+            throw new SomeDBException("DB Error updating card after status change. " + e.getMessage(), e);
+        }
+    }
+
+    //TODO Проверить удаление карты, если у неё есть транзакции
+    @Override
+    public void deleteCard(Long id) {
+        Optional<Card> optionalCard = cardRepository.findById(id);
+        if(optionalCard.isEmpty())
+            throw new CardNotFoundException("A card with such id not found.");
+
+        Card card = optionalCard.get();
+        boolean isCardBalanceZero = card.getBalance().signum() == 0;
+
+        if(!isCardBalanceZero)
+            throw new CardBalanceException("Cannot delete a card with a non-zero amount.");
+
+        try {
+            cardRepository.delete(card);
+        } catch (DataIntegrityViolationException e) {
+            throw new SomeDBException("DB Error deleting card. " + e.getMessage(), e);
+        }
     }
 
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
