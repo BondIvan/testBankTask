@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: db/changelog/changeset/initial_schema.yaml
+  - include:
+      file: db/changelog/changeset/delete_fromAndTo_cardId_from_transaction.yaml

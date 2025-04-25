@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -39,6 +40,9 @@ public class Card {
 
     @Column(name = "balance", nullable = false, precision = 15, scale = 2)
     private BigDecimal balance;
+
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Transaction> transactionList;
 
     @Override
     public String toString() {

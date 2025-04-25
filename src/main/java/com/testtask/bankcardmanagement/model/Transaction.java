@@ -31,12 +31,11 @@ public class Transaction {
     private TransactionType type;
 
     @ManyToOne
-    @JoinColumn(name = "from_card_id", nullable = false)
-    private Card fromCard;
+    @JoinColumn(name = "card_id")
+    private Card card;
 
-    @ManyToOne
-    @JoinColumn(name = "to_card_id", nullable = false)
-    private Card toCard;
+    @Column(name = "target_masked_card")
+    private String targetMaskedCard;
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;
@@ -47,11 +46,10 @@ public class Transaction {
     @Override
     public String toString() {
         return "Transaction{" +
-                "id=" + id +
-                ", amount=" + amount +
+                "amount=" + amount +
                 ", type=" + type +
-                ", fromCardId='" + fromCard + '\'' +
-                ", toCardId='" + toCard + '\'' +
+                ", card=" + card +
+                ", targetMaskedCard='" + targetMaskedCard + '\'' +
                 ", transactionDate=" + transactionDate +
                 ", description='" + description + '\'' +
                 '}';
@@ -63,13 +61,12 @@ public class Transaction {
         if (o == null || getClass() != o.getClass()) return false;
         Transaction that = (Transaction) o;
         return Objects.equals(type, that.type)
-                && Objects.equals(fromCard, that.fromCard)
-                && Objects.equals(toCard, that.toCard)
+                && Objects.equals(card, that.card)
                 && Objects.equals(transactionDate, that.transactionDate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, fromCard, toCard, transactionDate);
+        return Objects.hash(type, card, transactionDate);
     }
 }
