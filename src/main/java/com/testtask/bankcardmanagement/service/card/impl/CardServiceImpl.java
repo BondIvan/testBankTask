@@ -7,7 +7,6 @@ import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
-import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
@@ -20,7 +19,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,7 +106,6 @@ public class CardServiceImpl implements CardService {
         }
     }
 
-    //TODO Проверить удаление карты, если у неё есть транзакции
     @Override
     public void deleteCard(Long id) {
         Optional<Card> optionalCard = cardRepository.findById(id);
