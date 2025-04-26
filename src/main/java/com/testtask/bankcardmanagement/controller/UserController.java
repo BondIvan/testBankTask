@@ -1,30 +1,48 @@
 package com.testtask.bankcardmanagement.controller;
 
-import com.testtask.bankcardmanagement.model.dto.user.UserRequest;
-import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
-import com.testtask.bankcardmanagement.service.user.UserService;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
+import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/v1/users/")
+@RequestMapping("/api/v1/user/")
 public class UserController {
-    private final UserService userService;
+    private final TransactionService transactionService;
 
-    @PostMapping("/")
-    public ResponseEntity<UserResponse> createUser(@RequestBody @Valid UserRequest userRequest) {
-        UserResponse userResponse = userService.createUser(userRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
+//    @GetMapping("/get-all-cards")
+//    public ResponseEntity<Page<CardResponse>> getAllUserCards() {
+//
+//    }
+
+//    @PostMapping("/request-block-card")
+//    public ResponseEntity<String> requestToBlockUserCard(@RequestBody @Valid BlockRequest blockRequest) {
+//
+//    }
+
+//    @GetMapping("/get-transaction-by-user-card/{cardId}")
+//    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(@PathVariable("cardId") Long id) {
+//
+//    }
+
+    @PostMapping("/write-off")
+    public ResponseEntity<TransactionResponse> writeOff(@RequestBody @Valid TransactionWriteOffRequest transactionWriteOffRequest) {
+        TransactionResponse transactionResponse = transactionService.writeOff(transactionWriteOffRequest);
+        return ResponseEntity.ok(transactionResponse);
     }
 
-    @GetMapping("/")
-    public ResponseEntity<UserResponse> getUserByEmail(@RequestBody String email) {
-        UserResponse userResponse = userService.getUserByEmail(email);
-        return ResponseEntity.ok(userResponse);
+    @PostMapping("/transfer")
+    public ResponseEntity<TransactionResponse> transfer(@RequestBody @Valid TransactionTransferRequest transactionTransferRequest) {
+        TransactionResponse transactionResponse = transactionService.transfer(transactionTransferRequest);
+        return ResponseEntity.ok(transactionResponse);
     }
 
 }
