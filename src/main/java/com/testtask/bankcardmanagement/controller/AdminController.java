@@ -4,9 +4,12 @@ import com.testtask.bankcardmanagement.exception.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
+import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
 import com.testtask.bankcardmanagement.model.dto.user.UserRequest;
 import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import com.testtask.bankcardmanagement.service.card.CardService;
+import com.testtask.bankcardmanagement.service.jwt.AuthenticationService;
 import com.testtask.bankcardmanagement.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,19 +30,22 @@ public class AdminController {
 
     private final UserService userService;
     private final CardService cardService;
+    private final AuthenticationService authenticationService;
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/create-user")
-    public ResponseEntity<UserResponse> createUser(@RequestBody @Valid UserRequest userRequest) {
-        UserResponse userResponse = userService.createUser(userRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
+    public ResponseEntity<AuthenticationResponse> createUser(@RequestBody @Valid RegistrationRequest registrationRequest) {
+        AuthenticationResponse authenticationResponse = authenticationService.register(registrationRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(authenticationResponse);
     }
 
+//    @PreAuthorize("hasAuthority('ADMIN')")
 //    @PutMapping("/update-user")
 //    public ResponseEntity<UserResponse> updateUser(@RequestBody @Valid UserRequest userRequest, @RequestBody @Valid String email) {
 //
 //    }
 
+//    @PreAuthorize("hasAuthority('ADMIN')")
 //    @DeleteMapping("/delete-user")
 //    public ResponseEntity<String> deleteUser(@RequestBody @Valid String email) {
 //

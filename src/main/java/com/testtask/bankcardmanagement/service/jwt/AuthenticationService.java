@@ -1,12 +1,10 @@
 package com.testtask.bankcardmanagement.service.jwt;
 
-import com.testtask.bankcardmanagement.exception.UserDuplicateException;
 import com.testtask.bankcardmanagement.exception.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationRequest;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
-import com.testtask.bankcardmanagement.model.enums.UserRole;
 import com.testtask.bankcardmanagement.model.mapper.AuthenticationMapper;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +26,7 @@ public class AuthenticationService {
         User user = new User();
         user.setEmail(authenticationRequest.email());
         user.setPassword(passwordEncoder.encode(authenticationRequest.password()));
-        user.setRole(UserRole.USER);
+        user.setRole(authenticationRequest.role());
         userRepository.save(user);
 
         String jwtToken = jwtService.generateToken(user);
