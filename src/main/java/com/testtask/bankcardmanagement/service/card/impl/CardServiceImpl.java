@@ -12,6 +12,7 @@ import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
+import com.testtask.bankcardmanagement.service.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
@@ -70,6 +71,28 @@ public class CardServiceImpl implements CardService {
                 foundCards,
                 pageable,
                 foundCards.size());
+    }
+
+    @Override
+    public Page<CardResponse> getAllCardsForCurrentUser(CardParamFilter cardParamFilter, int page, int size) {
+        User user = SecurityUtil.getCurrentUser();
+        CardParamFilter userFilter = new CardParamFilter(
+                cardParamFilter.status(),
+                user.getEmail()
+        );
+        // Can add new filter to cardParamFilter
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<Card> cardSpec = CardSpecification.build(userFilter);
+
+        List<CardResponse> foundCards = cardRepository.findAll(cardSpec, pageable).stream()
+                .map(cardMapper::toCardResponse)
+                .toList();
+
+        return new PageImpl<>(
+                foundCards,
+                pageable,
+                foundCards.size()
+        );
     }
 
     @Override

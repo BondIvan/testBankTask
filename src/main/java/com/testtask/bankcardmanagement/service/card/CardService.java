@@ -10,6 +10,7 @@ import java.util.List;
 public interface CardService {
     CardResponse createCard(CardRequest cardRequest);
     Page<CardResponse> getAllCards(CardParamFilter cardParamFilter, int page, int size, List<String> sortList, String sortOrder);
+    Page<CardResponse> getAllCardsForCurrentUser(CardParamFilter cardParamFilter, int page, int size);
     CardResponse blockCard(Long id);
     CardResponse activateCard(Long id);
     void deleteCard(Long id);
