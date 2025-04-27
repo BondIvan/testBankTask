@@ -14,4 +14,5 @@ public interface CardService {
     CardResponse blockCard(Long id);
     CardResponse activateCard(Long id);
     void deleteCard(Long id);
+    boolean validateCardOwnership(Long cardId);
 }

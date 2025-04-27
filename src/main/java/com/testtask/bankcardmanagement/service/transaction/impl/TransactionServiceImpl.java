@@ -3,9 +3,11 @@ package com.testtask.bankcardmanagement.service.transaction.impl;
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
+import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.User;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
@@ -14,8 +16,11 @@ import com.testtask.bankcardmanagement.model.mapper.TransactionMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.TransactionRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
+import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +36,10 @@ public class TransactionServiceImpl implements TransactionService {
     private final AESEncryption aesEncryption;
     private final TransactionMapper transactionMapper;
     private final UserRepository userRepository;
+    private final CardService cardService;
 
     //TODO Check limits
-    //TODO Check if card belongs to user
-    //TODO Get user from securityContext
+    //TODO Check if card status is not block
 
     @Override
     @Transactional
@@ -100,6 +105,35 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapper.toTransactionResponse(savedTransaction);
     }
 
+    @Override
+    public Page<TransactionResponse> getTransactionsByUserCard(Long cardId, TransactionParamFilter transactionParamFilter,
+                                                               int page, int size, List<String> sortList, String sortOrder) {
+        if(!cardService.validateCardOwnership(cardId))
+            throw new AccessDeniedException("Card does not belong to the user.");
+
+        List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
+
+        TransactionParamFilter updatedFilter = new TransactionParamFilter(
+                cardId,
+                transactionParamFilter.type(),
+                transactionParamFilter.fromDate(),
+                transactionParamFilter.toDate()
+        );
+
+        Specification<Transaction> transactionSpec = TransactionSpecification.build(updatedFilter);
+
+        List<TransactionResponse> transactions = transactionRepository.findAll(transactionSpec, pageable).stream()
+                .map(transactionMapper::toTransactionResponse)
+                .toList();
+
+        return new PageImpl<>(
+                transactions,
+                pageable,
+                transactions.size()
+        );
+    }
+
     private Transaction createTransaction(Card card, TransactionType type, BigDecimal amount,
                                           String description, String target, LocalDateTime dateTime) {
         Transaction transaction = new Transaction();
@@ -134,5 +168,12 @@ public class TransactionServiceImpl implements TransactionService {
                 .filter(card -> aesEncryption.decrypt(card.getEncryptedNumber()).equals(cardNumber))
                 .findFirst()
                 .orElseThrow(() -> new CardNotFoundException("You don't have a card with that number - " + cardNumber + "."));
+    }
+
+    private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
+        return sortList.stream()
+                .map(field -> new Sort.Order(sortDirection, field))
+                .toList();
     }
 }

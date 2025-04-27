@@ -15,4 +15,5 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
     @Query("SELECT c.encryptedNumber FROM Card c WHERE c.user.id = :ownerId")
     List<String> findEncryptedNumberByUserId(@Param("ownerId") Long ownerId);
     List<Card> findAllByUser(User user);
+    boolean existsByIdAndUserId(Long cardId, Long userId);
 }

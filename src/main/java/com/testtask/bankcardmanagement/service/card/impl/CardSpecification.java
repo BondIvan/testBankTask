@@ -14,7 +14,6 @@ public class CardSpecification {
     }
 
     public static Specification<Card> hasStatus(CardStatus cardStatus) {
-        System.out.println("spec status: " + cardStatus);
         return (root, query, criteriaBuilder) -> (cardStatus != null) ?
                 criteriaBuilder.equal(root.get("status"), cardStatus) :
                 criteriaBuilder.conjunction();

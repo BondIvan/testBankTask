@@ -1,8 +1,9 @@
 package com.testtask.bankcardmanagement.controller;
 
-import com.testtask.bankcardmanagement.model.User;
+import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
@@ -13,13 +14,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/user/")
 public class UserController {
+    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "card.status", "amount");
+
     private final TransactionService transactionService;
     private final CardService cardService;
 
@@ -31,7 +36,6 @@ public class UserController {
             @RequestParam(defaultValue = "10") int size
     )
     {
-        System.out.println("Current user: " + (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         return ResponseEntity.ok(
                 cardService.getAllCardsForCurrentUser(cardParamFilter, page, size)
         );
@@ -43,13 +47,23 @@ public class UserController {
 //
 //    }
 
-//    @PreAuthorize("hasAuthority('USER')")
-//    @GetMapping("/get-transactions-by-user-card/{cardId}")
-//    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(@PathVariable("cardId") Long id) {
-//
-//    }
-
     @PreAuthorize("hasAuthority('USER')")
+    @GetMapping("/get-transactions-by-user-card/{cardId}")
+    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
+            @PathVariable("cardId") Long cardId,
+            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") List<String> sortList,
+            @RequestParam(defaultValue = "ASC") String sortOrder
+    ) {
+        validateSortFields(sortList);
+        return ResponseEntity.ok(
+                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size, sortList, sortOrder)
+        );
+    }
+
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")
     @PostMapping("/write-off")
     public ResponseEntity<TransactionResponse> writeOff(@RequestBody @Valid TransactionWriteOffRequest transactionWriteOffRequest) {
         TransactionResponse transactionResponse = transactionService.writeOff(transactionWriteOffRequest);
@@ -61,6 +75,13 @@ public class UserController {
     public ResponseEntity<TransactionResponse> transfer(@RequestBody @Valid TransactionTransferRequest transactionTransferRequest) {
         TransactionResponse transactionResponse = transactionService.transfer(transactionTransferRequest);
         return ResponseEntity.ok(transactionResponse);
+    }
+
+    private void validateSortFields(List<String> sortList) {
+        sortList.forEach(field -> {
+            if(!SORTABLE_FIELDS.contains(field))
+                throw new InvalidSortFieldException("Sorting by this field is not supported.");
+        });
     }
 
 }

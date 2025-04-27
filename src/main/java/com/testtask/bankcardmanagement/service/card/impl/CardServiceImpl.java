@@ -5,6 +5,7 @@ import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
 import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.exception.db.SomeDBException;
+import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
 import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
@@ -150,6 +151,16 @@ public class CardServiceImpl implements CardService {
         } catch (DataIntegrityViolationException e) {
             throw new SomeDBException("DB Error deleting card. " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public boolean validateCardOwnership(Long id) {
+        User user = SecurityUtil.getCurrentUser();
+        boolean isCardOwner = cardRepository.existsByIdAndUserId(id, user.getId());
+        if(!isCardOwner)
+            throw new AccessDeniedException("Card does not belong to the user.");
+
+        return true;
     }
 
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
