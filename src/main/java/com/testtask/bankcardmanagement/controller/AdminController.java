@@ -28,13 +28,7 @@ public class AdminController {
     private final UserService userService;
     private final CardService cardService;
 
-    @GetMapping("/get-user")
-    public ResponseEntity<UserResponse> getUserByEmail(@RequestBody @Valid String email) {
-        UserResponse userResponse = userService.getUserByEmail(email);
-        return ResponseEntity.ok(userResponse);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/create-user")
     public ResponseEntity<UserResponse> createUser(@RequestBody @Valid UserRequest userRequest) {
         UserResponse userResponse = userService.createUser(userRequest);
@@ -51,35 +45,35 @@ public class AdminController {
 //
 //    }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/create-card")
     public ResponseEntity<CardResponse> createCard(@RequestBody @Valid CardRequest cardRequest) {
         CardResponse response = cardService.createCard(cardRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/block-card/{cardId}")
     public ResponseEntity<CardResponse> blockingCard(@PathVariable("cardId") Long id) {
         CardResponse cardResponse = cardService.blockCard(id);
         return ResponseEntity.ok(cardResponse);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/activate-card/{cardId}")
     public ResponseEntity<CardResponse> activatingCard(@PathVariable("cardId") Long id) {
         CardResponse cardResponse = cardService.activateCard(id);
         return ResponseEntity.ok(cardResponse);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/delete-card/{cardId}")
     public ResponseEntity<String> deleteCard(@PathVariable("cardId") Long id) {
         cardService.deleteCard(id);
         return ResponseEntity.ok("The card was successfully deleted");
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/get-all-cards")
     public ResponseEntity<Page<CardResponse>> getAllCards(
             @RequestBody() @Valid CardParamFilter paramFilter,
@@ -95,19 +89,19 @@ public class AdminController {
         );
     }
 
-//    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasAuthority('ADMIN')")
 //    @GetMapping("/get-transactions-by-card/{cardId}")
 //    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(@PathVariable("cardId") Long id) {
 //
 //    }
 
-//    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasAuthority('ADMIN')")
 //    @PostMapping("/set-day-limit")
 //    public ResponseEntity<?> setDayCardLimit() {
 //
 //    }
 
-//    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasAuthority('ADMIN')")
 //    @PostMapping("/set-month-limit")
 //    public ResponseEntity<?> setMonthCardLimit() {
 //
