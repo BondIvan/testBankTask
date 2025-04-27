@@ -7,6 +7,7 @@ import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,12 +34,14 @@ public class UserController {
 //
 //    }
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/write-off")
     public ResponseEntity<TransactionResponse> writeOff(@RequestBody @Valid TransactionWriteOffRequest transactionWriteOffRequest) {
         TransactionResponse transactionResponse = transactionService.writeOff(transactionWriteOffRequest);
         return ResponseEntity.ok(transactionResponse);
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponse> transfer(@RequestBody @Valid TransactionTransferRequest transactionTransferRequest) {
         TransactionResponse transactionResponse = transactionService.transfer(transactionTransferRequest);

@@ -4,7 +4,6 @@ import com.testtask.bankcardmanagement.exception.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.CardResponse;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.user.UserRequest;
 import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import com.testtask.bankcardmanagement.service.card.CardService;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +34,7 @@ public class AdminController {
         return ResponseEntity.ok(userResponse);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create-user")
     public ResponseEntity<UserResponse> createUser(@RequestBody @Valid UserRequest userRequest) {
         UserResponse userResponse = userService.createUser(userRequest);
@@ -50,30 +51,35 @@ public class AdminController {
 //
 //    }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create-card")
     public ResponseEntity<CardResponse> createCard(@RequestBody @Valid CardRequest cardRequest) {
         CardResponse response = cardService.createCard(cardRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/block-card/{cardId}")
     public ResponseEntity<CardResponse> blockingCard(@PathVariable("cardId") Long id) {
         CardResponse cardResponse = cardService.blockCard(id);
         return ResponseEntity.ok(cardResponse);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/activate-card/{cardId}")
     public ResponseEntity<CardResponse> activatingCard(@PathVariable("cardId") Long id) {
         CardResponse cardResponse = cardService.activateCard(id);
         return ResponseEntity.ok(cardResponse);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete-card/{cardId}")
     public ResponseEntity<String> deleteCard(@PathVariable("cardId") Long id) {
         cardService.deleteCard(id);
         return ResponseEntity.ok("The card was successfully deleted");
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/get-all-cards")
     public ResponseEntity<Page<CardResponse>> getAllCards(
             @RequestBody() @Valid CardParamFilter paramFilter,
@@ -89,16 +95,19 @@ public class AdminController {
         );
     }
 
-//    @GetMapping("/get-transaction-by-card/{cardId}")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    @GetMapping("/get-transactions-by-card/{cardId}")
 //    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(@PathVariable("cardId") Long id) {
 //
 //    }
 
+//    @PreAuthorize("hasRole('ADMIN')")
 //    @PostMapping("/set-day-limit")
 //    public ResponseEntity<?> setDayCardLimit() {
 //
 //    }
 
+//    @PreAuthorize("hasRole('ADMIN')")
 //    @PostMapping("/set-month-limit")
 //    public ResponseEntity<?> setMonthCardLimit() {
 //
