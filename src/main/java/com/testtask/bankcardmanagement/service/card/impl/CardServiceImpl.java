@@ -1,12 +1,16 @@
 package com.testtask.bankcardmanagement.service.card.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
-import com.testtask.bankcardmanagement.exception.*;
+import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
+import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
+import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
+import com.testtask.bankcardmanagement.exception.db.SomeDBException;
+import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
-import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
-import com.testtask.bankcardmanagement.model.dto.CardRequest;
-import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
+import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;

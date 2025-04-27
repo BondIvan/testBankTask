@@ -1,6 +1,6 @@
 package com.testtask.bankcardmanagement.config.secureConfig;
 
-import com.testtask.bankcardmanagement.service.jwt.JwtService;
+import com.testtask.bankcardmanagement.service.security.jwt.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

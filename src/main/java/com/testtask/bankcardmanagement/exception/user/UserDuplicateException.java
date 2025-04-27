@@ -1,4 +1,4 @@
-package com.testtask.bankcardmanagement.exception;
+package com.testtask.bankcardmanagement.exception.user;
 
 public class UserDuplicateException extends RuntimeException {
     public UserDuplicateException(String message) {

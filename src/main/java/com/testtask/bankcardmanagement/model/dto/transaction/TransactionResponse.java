@@ -1,6 +1,6 @@
 package com.testtask.bankcardmanagement.model.dto.transaction;
 
-import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 
 import java.math.BigDecimal;

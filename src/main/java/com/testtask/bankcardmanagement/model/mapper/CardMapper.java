@@ -2,7 +2,7 @@ package com.testtask.bankcardmanagement.model.mapper;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.model.Card;
-import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

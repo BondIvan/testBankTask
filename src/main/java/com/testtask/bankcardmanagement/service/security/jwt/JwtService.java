@@ -1,4 +1,4 @@
-package com.testtask.bankcardmanagement.service.jwt;
+package com.testtask.bankcardmanagement.service.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

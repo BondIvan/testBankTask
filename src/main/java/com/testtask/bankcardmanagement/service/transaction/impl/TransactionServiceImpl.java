@@ -1,8 +1,8 @@
 package com.testtask.bankcardmanagement.service.transaction.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
-import com.testtask.bankcardmanagement.exception.CardBalanceException;
-import com.testtask.bankcardmanagement.exception.CardNotFoundException;
+import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
+import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.User;

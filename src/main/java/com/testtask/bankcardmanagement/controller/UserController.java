@@ -1,8 +1,8 @@
 package com.testtask.bankcardmanagement.controller;
 
 import com.testtask.bankcardmanagement.model.User;
-import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
-import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
+import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;

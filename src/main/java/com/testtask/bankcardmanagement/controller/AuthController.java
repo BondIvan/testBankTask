@@ -3,7 +3,7 @@ package com.testtask.bankcardmanagement.controller;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationRequest;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
-import com.testtask.bankcardmanagement.service.jwt.AuthenticationService;
+import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

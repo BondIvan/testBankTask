@@ -1,6 +1,6 @@
-package com.testtask.bankcardmanagement.service.jwt;
+package com.testtask.bankcardmanagement.service.security.jwt;
 
-import com.testtask.bankcardmanagement.exception.UserNotFoundException;
+import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationRequest;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;

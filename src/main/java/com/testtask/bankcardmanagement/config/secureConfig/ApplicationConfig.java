@@ -1,6 +1,6 @@
 package com.testtask.bankcardmanagement.config.secureConfig;
 
-import com.testtask.bankcardmanagement.exception.UserNotFoundException;
+import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

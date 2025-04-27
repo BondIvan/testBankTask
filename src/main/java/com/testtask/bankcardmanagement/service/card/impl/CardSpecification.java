@@ -1,11 +1,9 @@
 package com.testtask.bankcardmanagement.service.card.impl;
 
 import com.testtask.bankcardmanagement.model.Card;
-import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
+import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.time.LocalDate;
 
 public class CardSpecification {
 

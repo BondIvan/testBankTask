@@ -1,15 +1,13 @@
 package com.testtask.bankcardmanagement.controller;
 
-import com.testtask.bankcardmanagement.exception.InvalidSortFieldException;
-import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
-import com.testtask.bankcardmanagement.model.dto.CardRequest;
-import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
+import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
+import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
-import com.testtask.bankcardmanagement.model.dto.user.UserRequest;
-import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import com.testtask.bankcardmanagement.service.card.CardService;
-import com.testtask.bankcardmanagement.service.jwt.AuthenticationService;
+import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
 import com.testtask.bankcardmanagement.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

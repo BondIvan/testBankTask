@@ -1,4 +1,4 @@
-package com.testtask.bankcardmanagement.model.dto;
+package com.testtask.bankcardmanagement.model.dto.card;
 
 import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;

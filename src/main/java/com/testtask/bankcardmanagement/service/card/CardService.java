@@ -1,8 +1,8 @@
 package com.testtask.bankcardmanagement.service.card;
 
-import com.testtask.bankcardmanagement.model.dto.CardParamFilter;
-import com.testtask.bankcardmanagement.model.dto.CardRequest;
-import com.testtask.bankcardmanagement.model.dto.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
+import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import org.springframework.data.domain.Page;
 
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.testtask.bankcardmanagement.converter;
 
-import com.testtask.bankcardmanagement.exception.ConvertingEnumException;
+import com.testtask.bankcardmanagement.exception.other.ConvertingEnumException;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

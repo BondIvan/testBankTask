@@ -1,4 +1,4 @@
-package com.testtask.bankcardmanagement.model.dto;
+package com.testtask.bankcardmanagement.model.dto.card;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;

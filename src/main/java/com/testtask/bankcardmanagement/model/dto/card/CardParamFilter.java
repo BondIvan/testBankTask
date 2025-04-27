@@ -1,8 +1,6 @@
-package com.testtask.bankcardmanagement.model.dto;
+package com.testtask.bankcardmanagement.model.dto.card;
 
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
-
-import java.time.LocalDate;
 
 public record CardParamFilter(
         CardStatus status,
