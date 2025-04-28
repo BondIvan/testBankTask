@@ -2,6 +2,7 @@ package com.testtask.bankcardmanagement.model.dto.card;
 
 import com.testtask.bankcardmanagement.model.dto.limit.LimitRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -18,6 +19,7 @@ public record CardRequest(
         LocalDate expirationDate,
 
         @NotNull
+        @Email(message = "Invalid email format")
         String ownerEmail,
 
         @Valid

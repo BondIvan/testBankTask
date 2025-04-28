@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record UserRequest(
-        @Email
+        @Email(message = "Invalid email format")
         String email,
 
         @Size(min = 8)

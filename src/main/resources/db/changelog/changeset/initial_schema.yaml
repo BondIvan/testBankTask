@@ -129,7 +129,7 @@ databaseChangeLog:
 
   - changeSet:
       id: add-foreign-keys
-      author: your_name
+      author: boiv
       changes:
         - addForeignKeyConstraint:
             baseTableName: cards
