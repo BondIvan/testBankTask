@@ -1,5 +1,6 @@
 package com.testtask.bankcardmanagement.service.card;
 
+import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
@@ -15,4 +16,5 @@ public interface CardService {
     CardResponse activateCard(Long id);
     void deleteCard(Long id);
     boolean validateCardOwnership(Long cardId);
+    boolean isCardAvailable(Card card);
 }

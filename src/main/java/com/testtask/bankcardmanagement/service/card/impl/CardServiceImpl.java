@@ -3,6 +3,7 @@ package com.testtask.bankcardmanagement.service.card.impl;
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
 import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
+import com.testtask.bankcardmanagement.exception.card.CardNotAvailableException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.exception.db.SomeDBException;
 import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
@@ -180,6 +181,17 @@ public class CardServiceImpl implements CardService {
         boolean isCardOwner = cardRepository.existsByIdAndUserId(id, user.getId());
         if(!isCardOwner)
             throw new AccessDeniedException("Card does not belong to the user.");
+
+        return true;
+    }
+
+    @Override
+    public boolean isCardAvailable(Card card) {
+        if(card.getStatus() == CardStatus.BLOCKED)
+            throw new CardNotAvailableException("This card is blocked");
+
+        if(card.getStatus() == CardStatus.EXPIRED)
+            throw new CardNotAvailableException("This card id expired. The expiration date has expired at " + card.getExpirationDate());
 
         return true;
     }

@@ -16,7 +16,5 @@ public record TransactionWriteOffRequest(
         @DecimalMin(value = "0.00", inclusive = false)
         BigDecimal amount,
 
-        String description,
-
-        String userEmail //TODO Temporary solution
+        String description
 ) { }

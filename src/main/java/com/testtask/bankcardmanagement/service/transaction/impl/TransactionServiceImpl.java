@@ -1,24 +1,27 @@
 package com.testtask.bankcardmanagement.service.transaction.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
-import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
-import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
+import com.testtask.bankcardmanagement.exception.limit.LimitExceededException;
+import com.testtask.bankcardmanagement.exception.transaction.TransactionDeclinedException;
 import com.testtask.bankcardmanagement.model.Card;
+import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
+import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.model.mapper.TransactionMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.TransactionRepository;
-import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
+import com.testtask.bankcardmanagement.service.security.SecurityUtil;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -35,21 +39,18 @@ public class TransactionServiceImpl implements TransactionService {
     private final CardRepository cardRepository;
     private final AESEncryption aesEncryption;
     private final TransactionMapper transactionMapper;
-    private final UserRepository userRepository;
     private final CardService cardService;
-
-    //TODO Check limits
-    //TODO Check if card status is not block
 
     @Override
     @Transactional
     public TransactionResponse transfer(TransactionTransferRequest transactionTransferRequest) {
-        User user = getCurrentUser(transactionTransferRequest.email());
+        User user = SecurityUtil.getCurrentUser();
 
         Card senderCard = findCardByNumber(transactionTransferRequest.fromCardNumber(), user);
         Card receiverCard = findCardByNumber(transactionTransferRequest.toCardNumber(), user);
 
-        checkCardLimits(senderCard);
+        if(!cardService.validateCardOwnership(senderCard.getId()) || !cardService.validateCardOwnership(receiverCard.getId()))
+            throw new TransactionDeclinedException("Card does not belong to the user.");
 
         LocalDateTime localDateTime = LocalDateTime.now();
 
@@ -83,10 +84,16 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionResponse writeOff(TransactionWriteOffRequest transactionWriteOffRequest) {
-        User fromUser = getCurrentUser(transactionWriteOffRequest.userEmail());
+        User fromUser = SecurityUtil.getCurrentUser();
         Card senderCard = findCardByNumber(transactionWriteOffRequest.fromCardNumber(), fromUser);
 
-        checkCardLimits(senderCard);
+        if(!cardService.validateCardOwnership(senderCard.getId()))
+            throw new TransactionDeclinedException("Card does not belong to the user.");
+
+        if(!cardService.isCardAvailable(senderCard))
+            throw new TransactionDeclinedException("The card is not valid.");
+
+        checkCardLimits(senderCard, transactionWriteOffRequest.amount());
 
         Transaction writeOffTransaction = createTransaction(
                 senderCard,
@@ -105,11 +112,24 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapper.toTransactionResponse(savedTransaction);
     }
 
+    private Transaction createTransaction(Card card, TransactionType type, BigDecimal amount,
+                                          String description, String target, LocalDateTime dateTime) {
+        Transaction transaction = new Transaction();
+        transaction.setCard(card);
+        transaction.setType(type);
+        transaction.setAmount(amount);
+        transaction.setDescription(description);
+        transaction.setTargetMaskedCard(target);
+        transaction.setTransactionDate(dateTime);
+
+        return transaction;
+    }
+
     @Override
     public Page<TransactionResponse> getTransactionsByUserCard(Long cardId, TransactionParamFilter transactionParamFilter,
                                                                int page, int size, List<String> sortList, String sortOrder) {
         if(!cardService.validateCardOwnership(cardId))
-            throw new AccessDeniedException("Card does not belong to the user.");
+            throw new TransactionDeclinedException("Card does not belong to the user.");
 
         List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
@@ -134,36 +154,82 @@ public class TransactionServiceImpl implements TransactionService {
         );
     }
 
-    private Transaction createTransaction(Card card, TransactionType type, BigDecimal amount,
-                                          String description, String target, LocalDateTime dateTime) {
-        Transaction transaction = new Transaction();
-        transaction.setCard(card);
-        transaction.setType(type);
-        transaction.setAmount(amount);
-        transaction.setDescription(description);
-        transaction.setTargetMaskedCard(target);
-        transaction.setTransactionDate(dateTime);
+    private List<Transaction> getAllTransactionsByUserCardForADay(Long cardId) {
+        LocalDateTime startThisDay = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
+        LocalDateTime startNextDay = startThisDay.plusDays(1);
+        TransactionParamFilter filter = new TransactionParamFilter(
+                cardId,
+                TransactionType.WRITE_OFF,
+                startThisDay,
+                startNextDay
+        );
 
-        return transaction;
+        Specification<Transaction> spec = TransactionSpecification.build(filter);
+        return transactionRepository.findAll(spec);
+    }
+
+    private List<Transaction> getAllTransactionsByUserCardForAMonth(Long cardId) {
+        LocalDateTime startThisMonth = LocalDateTime.now().withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+        LocalDateTime startNextMonth = startThisMonth.plusMonths(1);
+        TransactionParamFilter filter = new TransactionParamFilter(
+                cardId,
+                TransactionType.WRITE_OFF,
+                startThisMonth,
+                startNextMonth
+        );
+
+        Specification<Transaction> spec = TransactionSpecification.build(filter);
+        return transactionRepository.findAll(spec);
+    }
+
+    private void checkCardLimits(Card card, BigDecimal transactionAmount) {
+        Hibernate.initialize(card.getLimits());
+        List<Limit> limits = card.getLimits();
+
+        for(Limit limit: limits) {
+            if (limit.getLimitType() == LimitType.NO_LIMIT)
+                continue;
+
+            switch (limit.getLimitType()) {
+                case DAILY -> {
+                    BigDecimal sumForADay = getAllTransactionsByUserCardForADay(card.getId()).stream()
+                            .map(Transaction::getAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    BigDecimal sumAfterDayTransactions = sumForADay.add(transactionAmount);
+
+                    if(sumAfterDayTransactions.compareTo(limit.getMaxAmount()) > 0) {
+                        throw new LimitExceededException(
+                                String.format("Limit %s exceeded. Max: %s, current operation %s, already spent: %s",
+                                        LimitType.DAILY, limit.getMaxAmount(), transactionAmount, sumForADay)
+                        );
+                    }
+                }
+
+                case MONTHLY -> {
+                    BigDecimal sumForAMonth = getAllTransactionsByUserCardForAMonth(card.getId()).stream()
+                            .map(Transaction::getAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    BigDecimal sumAfterTransactionMonthTransactions = sumForAMonth.add(transactionAmount);
+
+                    if(sumAfterTransactionMonthTransactions.compareTo(limit.getMaxAmount()) > 0) {
+                        throw new LimitExceededException(
+                                String.format("Limit %s exceeded. Max: %s, current operation %s, already spent: %s",
+                                        LimitType.MONTHLY, limit.getMaxAmount(), transactionAmount, sumForAMonth)
+                        );
+                    }
+                }
+            }
+        }
     }
 
     private String maskTargetNumber(String number) {
         return "**** **** **** " + number.substring(12);
     }
 
-    private void checkCardLimits(Card card) {
-        //TODO Temporary solution
-        if(card.getBalance().compareTo(BigDecimal.ZERO) < 0)
-            throw new CardBalanceException("This card has negative balance.");
-    }
-
-    private User getCurrentUser(String userEmail) {
-        //TODO Temporary solution
-        return userRepository.findUserByEmail(userEmail).get();
-    }
-
     private Card findCardByNumber(String cardNumber, User user) {
-        //TODO Temporary solution
+        //TODO Temporary solution (rewrite to cardHash)
         return cardRepository.findAllByUser(user).stream()
                 .filter(card -> aesEncryption.decrypt(card.getEncryptedNumber()).equals(cardNumber))
                 .findFirst()

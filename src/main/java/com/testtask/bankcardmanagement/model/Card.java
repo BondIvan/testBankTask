@@ -27,6 +27,8 @@ public class Card {
     @Column(name = "encrypted_number", nullable = false)
     private String encryptedNumber;
 
+//    private String cardHash; for searching card by number
+
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
 
