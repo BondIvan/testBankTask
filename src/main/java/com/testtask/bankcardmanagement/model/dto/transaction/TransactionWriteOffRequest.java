@@ -9,11 +9,11 @@ import java.math.BigDecimal;
 
 public record TransactionWriteOffRequest(
         @NotNull
-        @Pattern(regexp = "^\\d{16}$")
+        @Pattern(regexp = "^\\d{16}$", message = "Invalid card number,should be - ____ ____ ____ ____")
         String fromCardNumber,
 
         @Positive
-        @DecimalMin(value = "0.00", inclusive = false)
+        @DecimalMin(value = "0.00", inclusive = false, message = "Min value 0.00")
         BigDecimal amount,
 
         String description

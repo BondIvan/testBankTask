@@ -13,7 +13,7 @@ public record LimitRequest(
         LimitType type,
 
         @Positive
-        @DecimalMin("1.00")
+        @DecimalMin(value = "1.00", message = "Min value - 1.00")
         BigDecimal maxAmount
 ) {
         public LimitRequest {

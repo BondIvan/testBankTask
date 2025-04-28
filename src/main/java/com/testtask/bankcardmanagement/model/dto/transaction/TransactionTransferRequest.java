@@ -9,18 +9,16 @@ import java.math.BigDecimal;
 
 public record TransactionTransferRequest(
         @NotNull
-        @Pattern(regexp = "^\\d{16}$")
+        @Pattern(regexp = "^\\d{16}$", message = "Invalid card number,should be - ____ ____ ____ ____")
         String fromCardNumber,
 
         @NotNull
-        @Pattern(regexp = "^\\d{16}$")
+        @Pattern(regexp = "^\\d{16}$", message = "Invalid card number,should be - ____ ____ ____ ____")
         String toCardNumber,
 
         @Positive
-        @DecimalMin(value = "0.00", inclusive = false)
+        @DecimalMin(value = "0.00", inclusive = false, message = "Min value 0.00")
         BigDecimal amount,
 
-        String description,
-
-        String email //TODO Temporary solution
+        String description
 ) { }

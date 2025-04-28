@@ -9,7 +9,7 @@ public record UserRequest(
         @Email(message = "Invalid email format")
         String email,
 
-        @Size(min = 8)
+        @Size(min = 8, message = "Password must be at least 8 characters long")
         String password,
 
         @NotNull

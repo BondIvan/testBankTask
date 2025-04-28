@@ -12,7 +12,7 @@ import java.util.List;
 
 public record CardRequest(
         @NotNull
-        @Pattern(regexp = "^\\d{16}$")
+        @Pattern(regexp = "^\\d{16}$", message = "Invalid card number,should be - ____ ____ ____ ____")
         String cardNumber,
 
         @Future(message = "The expiration date must be in future")
