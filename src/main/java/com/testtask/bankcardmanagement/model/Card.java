@@ -44,10 +44,13 @@ public class Card {
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Transaction> transactionList;
 
+    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Limit> limits;
+
     @Override
     public String toString() {
-        return String.format("encryptedNumber: %s, expirationDate: %s, status: %s, balance: %.2f",
-                encryptedNumber, expirationDate, status, balance);
+        return String.format("encryptedNumber: %s, expirationDate: %s, status: %s, balance: %.2f, limits: %s",
+                encryptedNumber, expirationDate, status, balance, limits);
     }
 
     @Override

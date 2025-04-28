@@ -37,7 +37,7 @@ public class Limit {
     public String toString() {
         return "Limit{" +
                 "id=" + id +
-                ", cardId='" + card + '\'' +
+                ", cardId='" + card.getId() + '\'' +
                 ", limitType=" + limitType +
                 ", maxAmount=" + maxAmount +
                 '}';

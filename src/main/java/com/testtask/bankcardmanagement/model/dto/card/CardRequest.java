@@ -1,10 +1,13 @@
 package com.testtask.bankcardmanagement.model.dto.card;
 
+import com.testtask.bankcardmanagement.model.dto.limit.LimitRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record CardRequest(
         @NotNull
@@ -15,5 +18,8 @@ public record CardRequest(
         LocalDate expirationDate,
 
         @NotNull
-        String ownerEmail
+        String ownerEmail,
+
+        @Valid
+        List<LimitRequest> limits
 ) { }

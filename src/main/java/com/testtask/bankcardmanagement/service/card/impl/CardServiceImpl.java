@@ -8,12 +8,16 @@ import com.testtask.bankcardmanagement.exception.db.SomeDBException;
 import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
 import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
+import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.limit.LimitRequest;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
+import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
+import com.testtask.bankcardmanagement.model.mapper.LimitMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +40,7 @@ public class CardServiceImpl implements CardService {
     private final AESEncryption aesEncryption;
     private final UserRepository userRepository;
     private final CardMapper cardMapper;
+    private final LimitMapper limitMapper;
 
     @Override
     public CardResponse createCard(CardRequest cardRequest) {
@@ -47,6 +53,10 @@ public class CardServiceImpl implements CardService {
         if(isCardNumberDuplicate(owner, cardRequest.cardNumber()))
             throw new CardDuplicateException("A card with this number already exists.");
 
+        List<LimitRequest> limitRequestList = cardRequest.limits();
+        if(limitRequestList == null || limitRequestList.isEmpty())
+            limitRequestList = List.of(new LimitRequest(LimitType.NO_LIMIT, null));
+
         Card card = new Card();
         card.setUser(owner);
         card.setEncryptedNumber(aesEncryption.encrypt(cardRequest.cardNumber()));
@@ -56,7 +66,18 @@ public class CardServiceImpl implements CardService {
 
         try {
             Card savedCard = cardRepository.save(card);
-            return cardMapper.toCardResponse(savedCard);
+
+            List<Limit> limits = limitRequestList.stream()
+                    .map(limitRequest -> {
+                        Limit limit = limitMapper.toLimit(limitRequest);
+                        limit.setCard(savedCard);
+                        return limit;
+                    })
+                    .collect(Collectors.toList());
+
+            savedCard.setLimits(limits);
+            Card savedWithLimits = cardRepository.save(savedCard);
+            return cardMapper.toCardResponse(savedWithLimits);
         } catch (DataIntegrityViolationException e) {
             throw new SomeDBException("A card with this number already exists in the database. " + e.getMessage(), e);
         }
