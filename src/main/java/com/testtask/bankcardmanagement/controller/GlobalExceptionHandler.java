@@ -4,7 +4,6 @@ import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
 import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
 import com.testtask.bankcardmanagement.exception.card.CardNotAvailableException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
-import com.testtask.bankcardmanagement.exception.db.SomeDBException;
 import com.testtask.bankcardmanagement.exception.encryption.AESEncryptionException;
 import com.testtask.bankcardmanagement.exception.limit.LimitExceededException;
 import com.testtask.bankcardmanagement.exception.limit.LimitException;
@@ -93,13 +92,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<String> handleUserNotFound(UserNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
-    }
-
-// DB
-
-    @ExceptionHandler(SomeDBException.class)
-    public ResponseEntity<String> handleSomeDB(SomeDBException exception) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
     }
 
 // Encryption

@@ -5,7 +5,6 @@ import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
 import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
 import com.testtask.bankcardmanagement.exception.card.CardNotAvailableException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
-import com.testtask.bankcardmanagement.exception.db.SomeDBException;
 import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
 import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
@@ -25,7 +24,6 @@ import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
@@ -67,23 +65,19 @@ public class CardServiceImpl implements CardService {
         card.setStatus(CardStatus.ACTIVE);
         card.setBalance(BigDecimal.ZERO);
 
-        try {
-            Card savedCard = cardRepository.save(card);
+        Card savedCard = cardRepository.save(card);
 
-            List<Limit> limits = limitRequestList.stream()
-                    .map(limitRequest -> {
-                        Limit limit = limitMapper.toLimit(limitRequest);
-                        limit.setCard(savedCard);
-                        return limit;
-                    })
-                    .collect(Collectors.toList());
+        List<Limit> limits = limitRequestList.stream()
+                .map(limitRequest -> {
+                    Limit limit = limitMapper.toLimit(limitRequest);
+                    limit.setCard(savedCard);
+                    return limit;
+                })
+                .collect(Collectors.toList());
 
-            savedCard.setLimits(limits);
-            Card savedWithLimits = cardRepository.save(savedCard);
-            return cardMapper.toCardResponse(savedWithLimits);
-        } catch (DataIntegrityViolationException e) {
-            throw new SomeDBException("A card with this number already exists in the database. " + e.getMessage(), e);
-        }
+        savedCard.setLimits(limits);
+        Card savedWithLimits = cardRepository.save(savedCard);
+        return cardMapper.toCardResponse(savedWithLimits);
     }
 
     @Override
@@ -133,12 +127,8 @@ public class CardServiceImpl implements CardService {
         Card card = optionalCard.get();
         card.setStatus(CardStatus.BLOCKED);
 
-        try {
-            Card updatedCard = cardRepository.save(card);
-            return cardMapper.toCardResponse(updatedCard);
-        } catch (DataIntegrityViolationException e) {
-            throw new SomeDBException("DB Error updating card after status change. " + e.getMessage(), e);
-        }
+        Card updatedCard = cardRepository.save(card);
+        return cardMapper.toCardResponse(updatedCard);
     }
 
     @Override
@@ -150,12 +140,8 @@ public class CardServiceImpl implements CardService {
         Card card = optionalCard.get();
         card.setStatus(CardStatus.ACTIVE);
 
-        try {
-            Card updatedCard = cardRepository.save(card);
-            return cardMapper.toCardResponse(updatedCard);
-        } catch (DataIntegrityViolationException e) {
-            throw new SomeDBException("DB Error updating card after status change. " + e.getMessage(), e);
-        }
+        Card updatedCard = cardRepository.save(card);
+        return cardMapper.toCardResponse(updatedCard);
     }
 
     @Override
@@ -170,11 +156,7 @@ public class CardServiceImpl implements CardService {
         if(!isCardBalanceZero)
             throw new CardBalanceException("Cannot delete a card with a non-zero amount.");
 
-        try {
-            cardRepository.delete(card);
-        } catch (DataIntegrityViolationException e) {
-            throw new SomeDBException("DB Error deleting card. " + e.getMessage(), e);
-        }
+        cardRepository.delete(card);
     }
 
     @Override
