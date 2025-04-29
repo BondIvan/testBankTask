@@ -15,6 +15,7 @@ import com.testtask.bankcardmanagement.exception.security.JwtTokenException;
 import com.testtask.bankcardmanagement.exception.transaction.TransactionDeclinedException;
 import com.testtask.bankcardmanagement.exception.user.UserDuplicateException;
 import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@Hidden
 public class GlobalExceptionHandler {
 
 // ALL
