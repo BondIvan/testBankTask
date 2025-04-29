@@ -13,17 +13,27 @@ import java.time.LocalDateTime;
 public class TransactionSpecification {
 
     public static Specification<Transaction> build(TransactionParamFilter transactionParamFilter) {
-        return hasType(transactionParamFilter.type())
+        return hasCardId(transactionParamFilter.cardId())
+                .and(checkOwnership(transactionParamFilter.checkOwnership()))
+                .and(hasType(transactionParamFilter.type()))
                 .and(hasDateAfter(transactionParamFilter.fromDate()))
-                .and(hasDateBefore(transactionParamFilter.toDate()))
-                .and(belongsToCurrentUser());
+                .and(hasDateBefore(transactionParamFilter.toDate()));
     }
 
-    public static Specification<Transaction> belongsToCurrentUser() {
+    public static Specification<Transaction> checkOwnership(boolean check) {
+        if(!check)
+            return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
+
         return (root, query, criteriaBuilder) -> {
             Join<Transaction, Card> cardJoin = root.join("card");
             return criteriaBuilder.equal(cardJoin.get("user").get("id"), SecurityUtil.getCurrentUser().getId());
         };
+    }
+
+    public static Specification<Transaction> hasCardId(Long cardId) {
+        return (root, query, cb) -> cardId != null ?
+                cb.equal(root.get("card").get("id"), cardId) :
+                cb.conjunction();
     }
 
     public static Specification<Transaction> hasType(TransactionType type) {

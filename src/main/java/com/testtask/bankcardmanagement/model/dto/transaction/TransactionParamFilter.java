@@ -8,5 +8,6 @@ public record TransactionParamFilter(
         Long cardId,
         TransactionType type,
         LocalDateTime fromDate,
-        LocalDateTime toDate
+        LocalDateTime toDate,
+        boolean checkOwnership
 ) { }

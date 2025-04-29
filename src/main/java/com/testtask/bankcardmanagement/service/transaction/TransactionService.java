@@ -12,5 +12,9 @@ public interface TransactionService {
     TransactionResponse transfer(TransactionTransferRequest transactionTransferRequest);
     TransactionResponse writeOff(TransactionWriteOffRequest transactionWriteOffRequest);
     Page<TransactionResponse> getTransactionsByUserCard(Long cardId, TransactionParamFilter transactionParamFilter,
-                                                        int page, int size, List<String> sortList, String sortOrder);
+                                                        int page, int size,
+                                                        List<String> sortList, String sortOrder);
+    Page<TransactionResponse> getTransactionsByCard(Long cardId, TransactionParamFilter transactionParamFilter,
+                                                        int page, int size,
+                                                        List<String> sortList, String sortOrder);
 }

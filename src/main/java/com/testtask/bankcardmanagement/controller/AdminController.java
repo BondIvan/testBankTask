@@ -7,8 +7,11 @@ import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
+import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import com.testtask.bankcardmanagement.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +28,13 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/v1/admin/")
 public class AdminController {
-    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "user.email", "status");
+    private static final Set<String> SORTABLE_CARD_FIELDS = Set.of("id", "user.email", "status");
+    private static final Set<String> SORTABLE_TRANSACTION_FIELDS = Set.of("id", "type", "amount");
 
     private final UserService userService;
     private final CardService cardService;
     private final AuthenticationService authenticationService;
+    private final TransactionService transactionService;
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/create-user")
@@ -88,17 +93,27 @@ public class AdminController {
             @RequestParam(defaultValue = "ASC") String sortOrder
     )
     {
-        validateSortFields(sortList);
+        validateCardSortFields(sortList);
         return ResponseEntity.ok(
                 cardService.getAllCards(paramFilter, page, size, sortList, sortOrder)
         );
     }
 
-//    @PreAuthorize("hasAuthority('ADMIN')")
-//    @GetMapping("/get-transactions-by-card/{cardId}")
-//    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(@PathVariable("cardId") Long id) {
-//
-//    }
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @GetMapping("/get-transactions-by-card/{cardId}")
+    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
+            @PathVariable("cardId") Long cardId,
+            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") List<String> sortList,
+            @RequestParam(defaultValue = "ASC") String sortOrder
+    ) {
+        validateTransactionSortFields(sortList);
+        return ResponseEntity.ok(
+                transactionService.getTransactionsByCard(cardId, transactionParamFilter, page, size, sortList, sortOrder)
+        );
+    }
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/update-limits/{cardId}")
@@ -108,9 +123,16 @@ public class AdminController {
         return ResponseEntity.ok(cardResponse);
     }
 
-    private void validateSortFields(List<String> sortList) {
+    private void validateTransactionSortFields(List<String> sortList) {
         sortList.forEach(field -> {
-            if(!SORTABLE_FIELDS.contains(field))
+            if(!SORTABLE_TRANSACTION_FIELDS.contains(field))
+                throw new InvalidSortFieldException("Sorting by this field is not supported.");
+        });
+    }
+
+    private void validateCardSortFields(List<String> sortList) {
+        sortList.forEach(field -> {
+            if(!SORTABLE_CARD_FIELDS.contains(field))
                 throw new InvalidSortFieldException("Sorting by this field is not supported.");
         });
     }

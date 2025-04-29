@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -221,6 +222,11 @@ public class CardServiceImpl implements CardService {
         card.setLimits(oldLimit);
         Card savedCard = cardRepository.save(card);
         return cardMapper.toCardResponse(savedCard);
+    }
+
+    @Override
+    public boolean existById(@NonNull Long cardId) {
+        return cardRepository.existsById(cardId);
     }
 
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {

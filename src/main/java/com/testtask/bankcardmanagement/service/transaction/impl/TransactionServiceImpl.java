@@ -127,23 +127,51 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Page<TransactionResponse> getTransactionsByUserCard(Long cardId, TransactionParamFilter transactionParamFilter,
-                                                               int page, int size, List<String> sortList, String sortOrder) {
+                                                               int page, int size,
+                                                               List<String> sortList, String sortOrder) {
         if(!cardService.validateCardOwnership(cardId))
             throw new TransactionDeclinedException("Card does not belong to the user.");
-
-        List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
 
         TransactionParamFilter updatedFilter = new TransactionParamFilter(
                 cardId,
                 transactionParamFilter.type(),
                 transactionParamFilter.fromDate(),
-                transactionParamFilter.toDate()
+                transactionParamFilter.toDate(),
+                true
         );
 
-        Specification<Transaction> transactionSpec = TransactionSpecification.build(updatedFilter);
+        return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
+    }
 
-        List<TransactionResponse> transactions = transactionRepository.findAll(transactionSpec, pageable).stream()
+    @Override
+    public Page<TransactionResponse> getTransactionsByCard(Long cardId, TransactionParamFilter transactionParamFilter,
+                                                           int page, int size,
+                                                           List<String> sortList, String sortOrder) {
+
+        TransactionParamFilter updatedFilter = new TransactionParamFilter(
+                cardId,
+                transactionParamFilter.type(),
+                transactionParamFilter.fromDate(),
+                transactionParamFilter.toDate(),
+                false
+        );
+
+        return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
+    }
+
+    private Page<TransactionResponse> getAllTransactionsByCard(TransactionParamFilter filter,
+                                                               int page, int size,
+                                                               List<String> sortList, String sortOrder) {
+
+        if(!cardService.existById(filter.cardId()))
+            throw new CardNotFoundException("The card with such id not found");
+
+        List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
+
+        Specification<Transaction> spec = TransactionSpecification.build(filter);
+
+        List<TransactionResponse> transactions = transactionRepository.findAll(spec, pageable).stream()
                 .map(transactionMapper::toTransactionResponse)
                 .toList();
 
@@ -161,7 +189,8 @@ public class TransactionServiceImpl implements TransactionService {
                 cardId,
                 TransactionType.WRITE_OFF,
                 startThisDay,
-                startNextDay
+                startNextDay,
+                true
         );
 
         Specification<Transaction> spec = TransactionSpecification.build(filter);
@@ -175,7 +204,8 @@ public class TransactionServiceImpl implements TransactionService {
                 cardId,
                 TransactionType.WRITE_OFF,
                 startThisMonth,
-                startNextMonth
+                startNextMonth,
+                true
         );
 
         Specification<Transaction> spec = TransactionSpecification.build(filter);
