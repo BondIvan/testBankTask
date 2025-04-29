@@ -13,3 +13,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
+
+my:
+  encrypt_key:  # 32 byte
+  encryption_key:
