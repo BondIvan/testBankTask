@@ -6,6 +6,7 @@ import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
+import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
 import com.testtask.bankcardmanagement.service.user.UserService;
@@ -99,17 +100,13 @@ public class AdminController {
 //
 //    }
 
-//    @PreAuthorize("hasAuthority('ADMIN')")
-//    @PostMapping("/set-day-limit")
-//    public ResponseEntity<?> setDayCardLimit() {
-//
-//    }
-
-//    @PreAuthorize("hasAuthority('ADMIN')")
-//    @PostMapping("/set-month-limit")
-//    public ResponseEntity<?> setMonthCardLimit() {
-//
-//    }
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @PutMapping("/update-limits/{cardId}")
+    public ResponseEntity<CardResponse> setDayCardLimit(@PathVariable("cardId") Long cardId,
+                                                        @RequestBody @Valid LimitUpdateRequest limitUpdateRequest) {
+        CardResponse cardResponse = cardService.updateCardLimit(cardId, limitUpdateRequest);
+        return ResponseEntity.ok(cardResponse);
+    }
 
     private void validateSortFields(List<String> sortList) {
         sortList.forEach(field -> {

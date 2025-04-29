@@ -4,6 +4,7 @@ import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -17,4 +18,5 @@ public interface CardService {
     void deleteCard(Long id);
     boolean validateCardOwnership(Long cardId);
     boolean isCardAvailable(Card card);
+    CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest);
 }

@@ -15,6 +15,7 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitRequest;
+import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
@@ -194,6 +195,32 @@ public class CardServiceImpl implements CardService {
             throw new CardNotAvailableException("This card id expired. The expiration date has expired at " + card.getExpirationDate());
 
         return true;
+    }
+
+    @Override
+    public CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest) {
+        Optional<Card> optionalCard = cardRepository.findById(cardId);
+
+        if(optionalCard.isEmpty())
+            throw new CardNotFoundException("The card with such id not found.");
+
+        Card card = optionalCard.get();
+
+        List<Limit> newLimits = limitUpdateRequest.limits().stream()
+                .map(limitRequest -> {
+                    Limit limit = limitMapper.toLimit(limitRequest);
+                    limit.setCard(card);
+                    return limit;
+                })
+                .collect(Collectors.toList());
+
+        List<Limit> oldLimit = card.getLimits();
+        oldLimit.clear();
+        oldLimit.addAll(newLimits);
+
+        card.setLimits(oldLimit);
+        Card savedCard = cardRepository.save(card);
+        return cardMapper.toCardResponse(savedCard);
     }
 
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
