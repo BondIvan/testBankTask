@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert-admin-user
+      author: boiv
+      preConditions:
+        - onFail: MARK_RAN
+          and:
+            - tableExists:
+                tableName: users
+            - not:
+                sqlCheck:
+                  sql: "SELECT COUNT(*) FROM users WHERE email = 'admin@mail.ru'"
+                  expectedResult: 1
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: email
+                  value: admin@mail.ru
+              - column:
+                  name: password
+                  value: $2a$10$LVvA4eHX.btar9woGVPb2eB7YCrwG.DJDnWI6v/n6G0JH7RJN.rdW
+              - column:
+                  name: role
+                  value: ADMIN
+      comment: "Adding an administrator admin@mail.ru"
