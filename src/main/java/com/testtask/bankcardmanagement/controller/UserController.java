@@ -7,6 +7,7 @@ import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFil
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
+import com.testtask.bankcardmanagement.model.dto.user.BlockRequest;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,7 +18,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,7 +38,6 @@ public class UserController {
             summary = "Get all cards",
             description = "Allows you to get all user cards. Only an user can do this."
     )
-    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/get-all-cards")
     public ResponseEntity<Page<CardResponse>> getAllUserCards(
             @RequestBody @Valid CardParamFilter cardParamFilter,
@@ -51,18 +50,17 @@ public class UserController {
         );
     }
 
-//    @PreAuthorize("hasAuthority('USER')")
-//    @PostMapping("/request-block-card")
-//    public ResponseEntity<String> requestToBlockUserCard(@RequestBody @Valid BlockRequest blockRequest) {
-//
-//    }
+    @PostMapping("/request-block-card")
+    public ResponseEntity<String> requestToBlockUserCard(@RequestBody @Valid BlockRequest blockRequest) {
+        //TODO Finish it off
+        return null;
+    }
 
     @SecurityRequirement(name = "JWT")
     @Operation(
             summary = "Get all card transactions",
             description = "Allows you to get all transactions on any user card by card Id. Only an user can do this."
     )
-    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/get-transactions-by-user-card/{cardId}")
     public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,
@@ -83,7 +81,6 @@ public class UserController {
             summary = "Make a withdrawal",
             description = "Allows you to perform a debit operation using a card number. Only an user can do this."
     )
-    @PreAuthorize("hasAuthority('USER')")
     @PostMapping("/write-off")
     public ResponseEntity<TransactionResponse> writeOff(@RequestBody @Valid TransactionWriteOffRequest transactionWriteOffRequest) {
         TransactionResponse transactionResponse = transactionService.writeOff(transactionWriteOffRequest);
@@ -95,7 +92,6 @@ public class UserController {
             summary = "Transfer funds between cards",
             description = "Allows you to transfer funds between user cards using card numbers. Only an user can do this."
     )
-    @PreAuthorize("hasAuthority('USER')")
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponse> transfer(@RequestBody @Valid TransactionTransferRequest transactionTransferRequest) {
         TransactionResponse transactionResponse = transactionService.transfer(transactionTransferRequest);

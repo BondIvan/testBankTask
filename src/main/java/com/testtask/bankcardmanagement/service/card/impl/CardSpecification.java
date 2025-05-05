@@ -5,11 +5,12 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
+
 public class CardSpecification {
 
     public static Specification<Card> build(CardParamFilter cardParamFilter) {
         return hasStatus(cardParamFilter.status())
-                //.and(isExpired())
                 .and(hasUserEmail(cardParamFilter.userEmail()));
     }
 
@@ -18,12 +19,6 @@ public class CardSpecification {
                 criteriaBuilder.equal(root.get("status"), cardStatus) :
                 criteriaBuilder.conjunction();
     }
-
-//    public static Specification<Card> isExpired() {
-//        return (root, query, criteriaBuilder) ->
-//                criteriaBuilder.lessThan(root.get("expirationDate"), LocalDate.now());
-//
-//    }
 
     public static Specification<Card> hasUserEmail(String email) {
         return (root, query, criteriaBuilder) -> (email != null) ?

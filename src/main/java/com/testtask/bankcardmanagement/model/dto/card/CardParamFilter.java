@@ -9,8 +9,6 @@ public record CardParamFilter(
         @Schema(description = "Card status", example = "ACTIVE, BLOCKED, EXPIRED")
         CardStatus status,
 
-//        LocalDate expirationDate,
-
         @Schema(description = "User mail", example = "example@mail.ru")
         @Email
         String userEmail
