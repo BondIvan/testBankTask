@@ -17,3 +17,12 @@ spring:
 my:
   encrypt_key:  # 32 byte
   encryption_key:
+  expired_in_days: 1
+
+cors:
+  allowed-origins:
+    - "*" # permit all domains
+  allowed-methods:
+    - "*" # permit all http methods
+  allowed-headers:
+    - "*" # permit all headers

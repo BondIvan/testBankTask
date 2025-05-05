@@ -23,12 +23,13 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
+    @Value("${my.expired_in_days}")
+    private long expired_in_days;
 
     @Value("${my.encryption_key}")
     private String valueForInject;
 
     private static String KEY;
-    private static final long EXPIRED_IN_DAYS = 1;
 
     @PostConstruct
     public void init() {
@@ -57,7 +58,7 @@ public class JwtService {
                 .claims(extraClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(Date.from(LocalDate.now().plusDays(EXPIRED_IN_DAYS).atStartOfDay(ZoneId.systemDefault()).toInstant()))
+                .expiration(Date.from(LocalDate.now().plusDays(expired_in_days).atStartOfDay(ZoneId.systemDefault()).toInstant()))
                 .signWith(SignatureAlgorithm.HS256, getSignInKey())
                 .compact();
     }
