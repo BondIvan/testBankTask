@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  bank-app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=${MYSQL_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - SPRING_ENCRYPTION_KEY_CARD_NUMBER=${ENCRYPTION_KEY_CARD_NUMBER}
+      - SPRING_ENCRYPTION_KEY_JWT=${ENCRYPTION_KEY_JWT}
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    networks:
+      - bank-network
+
+  mysql_db:
+    image: mysql:latest
+    container_name: my-mysql-db
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-uroot", "-p${MYSQL_PASSWORD}"]
+    networks:
+      - bank-network
+
+networks:
+  bank-network:
+    driver: bridge

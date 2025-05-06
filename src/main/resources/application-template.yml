@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url:
-    password:
-    username:
+    url: ${SPRING_DATASOURCE_URL:default-value}
+    username: ${SPRING_DATASOURCE_USERNAME:default-value}
+    password: ${SPRING_DATASOURCE_PASSWORD:default-value}
 
   jpa:
     database-platform: org.hibernate.dialect.MySQL8InnoDBDialect
@@ -15,8 +15,8 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 my:
-  encrypt_key:  # 32 byte
-  encryption_key:
+  encrypt_key: ${SPRING_ENCRYPTION_KEY_CARD_NUMBER:default-value}
+  encryption_key: ${SPRING_ENCRYPTION_KEY_JWT:default-value}
   expired_in_days: 1
 
 cors:
