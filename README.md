@@ -17,7 +17,7 @@ password: admin12345
     * выбрать 256-bit hex key
     * скопировать значение и вставить в ENCRYPTION_KEY_JWT
   * ENCRYPTION_KEY_CARD_NUMBER:
-    * заполнить поле encrypt_key (любые 32 символа)
+    * заполнить поле ENCRYPTION_KEY_CARD_NUMBER (любые 32 символа)
 * выполнить команду "docker compose up"
 
 Если не указывать поля в application-template, значения по умолчанию установятся в "default-value"
