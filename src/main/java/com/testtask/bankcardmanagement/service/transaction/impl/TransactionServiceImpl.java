@@ -1,13 +1,17 @@
 package com.testtask.bankcardmanagement.service.transaction.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
+import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.exception.limit.LimitExceededException;
 import com.testtask.bankcardmanagement.exception.transaction.TransactionDeclinedException;
+import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.User;
+import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
@@ -32,6 +36,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+/**
+ * Service for operations with card transactions
+ * @see CardService
+ * @see Card
+ * @see Transaction
+ * @see AESEncryption
+ */
 @RequiredArgsConstructor
 @Service
 public class TransactionServiceImpl implements TransactionService {
@@ -41,6 +52,14 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionMapper transactionMapper;
     private final CardService cardService;
 
+    /**
+     * Method for transferring funds between user cards
+     * @param transactionTransferRequest a request object containing the translation details
+     * @return an object {@link TransactionResponse} containing information about the transaction carried out
+     * @see TransactionTransferRequest
+     * @see TransactionResponse
+     * @throws TransactionDeclinedException If the card does not belong to the user
+     */
     @Override
     @Transactional
     public TransactionResponse transfer(TransactionTransferRequest transactionTransferRequest) {
@@ -81,6 +100,14 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapper.toTransactionResponse(savedTransactions.get(0));
     }
 
+    /**
+     * Method for debiting funds from the user's card
+     * @param transactionWriteOffRequest request object containing the write-off details
+     * @return an object {@link TransactionResponse} containing information about the transaction carried out
+     * @see TransactionWriteOffRequest
+     * @see TransactionResponse
+     * @throws TransactionDeclinedException If the card does not belong to the user or the card is not valid
+     */
     @Override
     @Transactional
     public TransactionResponse writeOff(TransactionWriteOffRequest transactionWriteOffRequest) {
@@ -112,6 +139,19 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapper.toTransactionResponse(savedTransaction);
     }
 
+    /**
+     * Method for creating a transaction object
+     * @param card the card for which the transfer or debit operation is performed
+     * @param type transaction type
+     * @param amount the amount of funds involved in the transaction
+     * @param description transaction description
+     * @param target masked recipient card number
+     * @param dateTime transaction time
+     * @return {@link Transaction} object
+     * @see TransactionWriteOffRequest
+     * @see TransactionResponse
+     * @see TransactionType
+     */
     private Transaction createTransaction(Card card, TransactionType type, BigDecimal amount,
                                           String description, String target, LocalDateTime dateTime) {
         Transaction transaction = new Transaction();
@@ -125,6 +165,20 @@ public class TransactionServiceImpl implements TransactionService {
         return transaction;
     }
 
+    /**
+     * Method to get all transactions of the specified card for the current user, checking if the card belongs to the user
+     * @param cardId card id for which transactions need to be received
+     * @param transactionParamFilter request object containing filter criteria
+     * @param page page number
+     * @param size page size
+     * @param sortList list of fields to sort by
+     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
+     * @return an object {@link Page<TransactionResponse>} representing a page of transactions
+     * @see TransactionParamFilter
+     * @see Page
+     * @see TransactionResponse
+     * @throws TransactionDeclinedException If the card does not belong to the user
+     */
     @Override
     public Page<TransactionResponse> getTransactionsByUserCard(Long cardId, TransactionParamFilter transactionParamFilter,
                                                                int page, int size,
@@ -143,6 +197,20 @@ public class TransactionServiceImpl implements TransactionService {
         return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
     }
 
+    /**
+     * Method to get all transactions for a specified card
+     * @param cardId card id for which transactions need to be received
+     * @param transactionParamFilter request object containing filter criteria
+     * @param page page number
+     * @param size page size
+     * @param sortList list of fields to sort by
+     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
+     * @return an object {@link Page<TransactionResponse>} representing a page of transactions
+     * @see TransactionParamFilter
+     * @see Page
+     * @see TransactionResponse
+     * @throws TransactionDeclinedException If the card does not belong to the user
+     */
     @Override
     public Page<TransactionResponse> getTransactionsByCard(Long cardId, TransactionParamFilter transactionParamFilter,
                                                            int page, int size,
@@ -159,6 +227,21 @@ public class TransactionServiceImpl implements TransactionService {
         return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
     }
 
+    /**
+     * Method to get all transactions on a card
+     * @param filter request object containing filter criteria
+     * @param page page number
+     * @param size page size
+     * @param sortList list of fields to sort by
+     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
+     * @return an object {@link Page<TransactionResponse>} representing a page of transactions
+     * @see TransactionParamFilter
+     * @see Page
+     * @see TransactionResponse
+     * @see Sort.Order
+     * @see TransactionSpecification
+     * @throws CardNotFoundException If the card is not found
+     */
     private Page<TransactionResponse> getAllTransactionsByCard(TransactionParamFilter filter,
                                                                int page, int size,
                                                                List<String> sortList, String sortOrder) {
@@ -182,6 +265,15 @@ public class TransactionServiceImpl implements TransactionService {
         );
     }
 
+
+    /**
+     * Method to get all transactions of the specified card for the current user for the period: day.
+     * With verification of the card's ownership by the user
+     * @param cardId card id for which transactions need to be received
+     * @return {@link List<Transaction>} list of transactions
+     * @see TransactionParamFilter
+     * @see TransactionSpecification
+     */
     private List<Transaction> getAllTransactionsByUserCardForADay(Long cardId) {
         LocalDateTime startThisDay = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
         LocalDateTime startNextDay = startThisDay.plusDays(1);
@@ -197,6 +289,14 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.findAll(spec);
     }
 
+    /**
+     * Method to get all transactions of the specified card for the current user for the period: month.
+     * With verification of the card's ownership by the user
+     * @param cardId card id for which transactions need to be received
+     * @return {@link List<Transaction>} list of transactions
+     * @see TransactionParamFilter
+     * @see TransactionSpecification
+     */
     private List<Transaction> getAllTransactionsByUserCardForAMonth(Long cardId) {
         LocalDateTime startThisMonth = LocalDateTime.now().withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
         LocalDateTime startNextMonth = startThisMonth.plusMonths(1);
@@ -212,6 +312,17 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.findAll(spec);
     }
 
+    /**
+     * The method checks whether the transaction amount exceeds the established limits for the card
+     * If the limit type is {@code NO_LIMIT}, the check for this limit is skipped.
+     * For limits of type {@code DAILY} and {@code MONTHLY}, the total amount of transactions
+     * for the corresponding period (day or month) is calculated and compared with the maximum limit amount.
+     * @param card object {@link Card}, for which limits are checked
+     * @param transactionAmount the {@link BigDecimal} amount of the current transaction to be verified
+     * @see Limit
+     * @see LimitType
+     * @throws LimitExceededException If any of the set {@code DAILY} or {@code MONTHLY} limits are exceeded
+     */
     private void checkCardLimits(Card card, BigDecimal transactionAmount) {
         Hibernate.initialize(card.getLimits());
         List<Limit> limits = card.getLimits();
@@ -254,10 +365,24 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
+    /**
+     * The method masks the card number, leaving only the last 4 digits visible
+     * @param number a string representation of the card number to be masked
+     * @return {@code String} masked card number in the format "**** **** **** xxxx", where xxxx are the last 4 digits
+     */
     private String maskTargetNumber(String number) {
         return "**** **** **** " + number.substring(12);
     }
 
+    /**
+     * The method finds the user's card by its full number
+     * <p><b>The current implementation will be changed</b></p>
+     * @param cardNumber card number as a string to find
+     * @param user object {@link User}, to whom the sought card belongs
+     * @return object {@link Card}
+     * @throws CardNotFoundException If the card with the specified number is not found on the user's account
+     */
+    @Deprecated
     private Card findCardByNumber(String cardNumber, User user) {
         //TODO Temporary solution (rewrite to cardHash)
         return cardRepository.findAllByUser(user).stream()
@@ -266,6 +391,13 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new CardNotFoundException("You don't have a card with that number - " + cardNumber + "."));
     }
 
+    /**
+     * The method creates a list of {@link Sort.Order} objects for use in sort queries.
+     * @param sortList  list of fields to sort by
+     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
+     * @return list of {@link Sort.Order}
+     * @see Sort.Order
+     */
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
         Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
         return sortList.stream()

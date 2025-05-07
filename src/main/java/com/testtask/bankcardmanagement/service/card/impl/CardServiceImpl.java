@@ -34,6 +34,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * This is a service for managing the Card entity
+ * @see CardService
+ * @see Card
+ */
 @Service
 @RequiredArgsConstructor
 public class CardServiceImpl implements CardService {
@@ -43,6 +48,15 @@ public class CardServiceImpl implements CardService {
     private final CardMapper cardMapper;
     private final LimitMapper limitMapper;
 
+    /**
+     * The method creates a new card for the specified user
+     * @param cardRequest request object for creating a card
+     * @return an object {@link CardResponse} containing data about the created card
+     * @see CardRequest
+     * @see CardResponse
+     * @throws UserNotFoundException If the user with the specified email does not exist
+     * @throws CardDuplicateException If the user already has a card with the same number
+     */
     @Override
     public CardResponse createCard(CardRequest cardRequest) {
         Optional<User> optionalUser = userRepository.findUserByEmail(cardRequest.ownerEmail());
@@ -80,6 +94,18 @@ public class CardServiceImpl implements CardService {
         return cardMapper.toCardResponse(savedWithLimits);
     }
 
+    /**
+     * The method gets all cards of all users
+     * @param cardParamFilter request object containing filter criteria
+     * @param page page number
+     * @param size page size
+     * @param sortList list of fields to sort by
+     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
+     * @return an object {@link Page<CardResponse>} representing a page of cards
+     * @see Page
+     * @see CardParamFilter
+     * @see CardSpecification
+     */
     @Override
     public Page<CardResponse> getAllCards(CardParamFilter cardParamFilter, int page, int size, List<String> sortList, String sortOrder) {
         List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
@@ -96,6 +122,15 @@ public class CardServiceImpl implements CardService {
                 foundCards.size());
     }
 
+    /**
+     * The method gets all cards for the authorized (current) user
+     * @param cardParamFilter request object containing filter criteria
+     * @param page page number
+     * @param size page size
+     * @return an object {@link Page<CardResponse>} representing a page of cards
+     * @see CardResponse
+     * @see CardSpecification
+     */
     @Override
     public Page<CardResponse> getAllCardsForCurrentUser(CardParamFilter cardParamFilter, int page, int size) {
         User user = SecurityUtil.getCurrentUser();
@@ -118,6 +153,13 @@ public class CardServiceImpl implements CardService {
         );
     }
 
+    /**
+     * The method changes any card status to blocked
+     * @param id of the card to be blocked
+     * @return an object {@link CardResponse} containing data about the blocked card
+     * @see CardStatus
+     * @throws CardNotFoundException If the card is not found
+     */
     @Override
     public CardResponse blockCard(Long id) {
         Optional<Card> optionalCard = cardRepository.findById(id);
@@ -131,6 +173,13 @@ public class CardServiceImpl implements CardService {
         return cardMapper.toCardResponse(updatedCard);
     }
 
+    /**
+     * The method changes any card status to activated
+     * @param id of the card that needs to be activated
+     * @return an {@link CardResponse} object containing data about the activated card
+     * @see CardStatus
+     * @throws CardNotFoundException If the card is not found
+     */
     @Override
     public CardResponse activateCard(Long id) {
         Optional<Card> optionalCard = cardRepository.findById(id);
@@ -144,6 +193,13 @@ public class CardServiceImpl implements CardService {
         return cardMapper.toCardResponse(updatedCard);
     }
 
+    /**
+     * The method deletes the user's card.
+     * @param id of the card to be deleted
+     * @see CardStatus
+     * @throws CardNotFoundException If the card is not found
+     * @throws CardBalanceException If the card balance is not zero
+     */
     @Override
     public void deleteCard(Long id) {
         Optional<Card> optionalCard = cardRepository.findById(id);
@@ -159,6 +215,13 @@ public class CardServiceImpl implements CardService {
         cardRepository.delete(card);
     }
 
+    /**
+     * The method checks whether the user is the owner of the card
+     * @param id of the card being checked
+     * @return {@code  true}, if the card belongs to the user
+     * @see SecurityUtil
+     * @throws AccessDeniedException If the card does not belong to the user
+     */
     @Override
     public boolean validateCardOwnership(Long id) {
         User user = SecurityUtil.getCurrentUser();
@@ -169,6 +232,13 @@ public class CardServiceImpl implements CardService {
         return true;
     }
 
+    /**
+     * The method checks whether the card is active
+     * @param card that needs to be checked
+     * @return {@code  true}, if the card is active
+     * @see CardStatus
+     * @throws CardNotAvailableException If the card is blocked or expired
+     */
     @Override
     public boolean isCardAvailable(Card card) {
         if(card.getStatus() == CardStatus.BLOCKED)
@@ -180,6 +250,15 @@ public class CardServiceImpl implements CardService {
         return true;
     }
 
+    /**
+     * The method updates the limits for the card
+     * @param cardId id of the card for which you need to update the limits
+     * @param limitUpdateRequest an object containing information about new limits
+     * @return an {@link CardResponse} object containing data about the updated card
+     * @see LimitUpdateRequest
+     * @see LimitType
+     * @throws CardNotFoundException If the card is not found
+     */
     @Override
     public CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest) {
         Optional<Card> optionalCard = cardRepository.findById(cardId);
@@ -206,11 +285,23 @@ public class CardServiceImpl implements CardService {
         return cardMapper.toCardResponse(savedCard);
     }
 
+    /**
+     * The method checks if the card exists
+     * @param cardId id of the card being checked
+     * @return {@code  true}, if the card exists
+     */
     @Override
     public boolean existById(@NonNull Long cardId) {
         return cardRepository.existsById(cardId);
     }
 
+    /**
+     * The method creates a list of {@link Sort.Order} objects based on the list of fields to sort and the sort direction.
+     * @param sortList list of fields to sort by
+     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
+     * @return a list of {@link Sort.Order} objects containing the sort field and direction
+     * @see Sort.Order
+     */
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
         Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
         return sortList.stream()
@@ -218,6 +309,12 @@ public class CardServiceImpl implements CardService {
                 .toList();
     }
 
+    /**
+     * The method checks whether the card is a duplicate
+     * @param user current user
+     * @param cardNumber new card number
+     * @return {@code  true}, if a card with the same number already exists
+     */
     private boolean isCardNumberDuplicate(User user, String cardNumber) {
         List<String> userCards = cardRepository.findEncryptedNumberByUserId(user.getId());
         return userCards.stream()
