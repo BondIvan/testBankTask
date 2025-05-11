@@ -296,6 +296,24 @@ public class CardServiceImpl implements CardService {
     }
 
     /**
+     * The method finds the user's card by its full number
+     * <p><b>The current implementation will be changed</b></p>
+     * @param cardNumber card number as a string to find
+     * @param owner object {@link User}, to whom the sought card belongs
+     * @return object {@link Card}
+     * @throws CardNotFoundException If the card with the specified number is not found on the user's account
+     */
+    @Deprecated
+    @Override
+    public Card findCardByNumber(String cardNumber, User owner) {
+        //TODO Temporary solution (rewrite to cardHash)
+        return cardRepository.findAllByUser(owner).stream()
+                .filter(card -> aesEncryption.decrypt(card.getEncryptedNumber()).equals(cardNumber))
+                .findFirst()
+                .orElseThrow(() -> new CardNotFoundException("You don't have a card with that number - " + cardNumber + "."));
+    }
+
+    /**
      * The method creates a list of {@link Sort.Order} objects based on the list of fields to sort and the sort direction.
      * @param sortList list of fields to sort by
      * @param sortOrder sort direction (ASC - ascending / DESC - descending)

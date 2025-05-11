@@ -1,6 +1,7 @@
 package com.testtask.bankcardmanagement.service.card;
 
 import com.testtask.bankcardmanagement.model.Card;
+import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
@@ -22,4 +23,5 @@ public interface CardService {
     boolean isCardAvailable(Card card);
     CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest);
     boolean existById(@NonNull Long cardId);
+    Card findCardByNumber(String cardNumber, User owner);
 }

@@ -67,8 +67,8 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionResponse transfer(TransactionTransferRequest transactionTransferRequest) {
         User user = SecurityUtil.getCurrentUser();
 
-        Card senderCard = findCardByNumber(transactionTransferRequest.fromCardNumber(), user);
-        Card receiverCard = findCardByNumber(transactionTransferRequest.toCardNumber(), user);
+        Card senderCard = cardService.findCardByNumber(transactionTransferRequest.fromCardNumber(), user);
+        Card receiverCard = cardService.findCardByNumber(transactionTransferRequest.toCardNumber(), user);
 
         if(!cardService.validateCardOwnership(senderCard.getId()) || !cardService.validateCardOwnership(receiverCard.getId()))
             throw new TransactionDeclinedException("Card does not belong to the user.");
@@ -114,7 +114,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional
     public TransactionResponse writeOff(TransactionWriteOffRequest transactionWriteOffRequest) {
         User fromUser = SecurityUtil.getCurrentUser();
-        Card senderCard = findCardByNumber(transactionWriteOffRequest.fromCardNumber(), fromUser);
+        Card senderCard = cardService.findCardByNumber(transactionWriteOffRequest.fromCardNumber(), fromUser);
 
         if(!cardService.validateCardOwnership(senderCard.getId()))
             throw new TransactionDeclinedException("Card does not belong to the user.");
@@ -274,23 +274,6 @@ public class TransactionServiceImpl implements TransactionService {
      */
     private String maskTargetNumber(String number) {
         return "**** **** **** " + number.substring(12);
-    }
-
-    /**
-     * The method finds the user's card by its full number
-     * <p><b>The current implementation will be changed</b></p>
-     * @param cardNumber card number as a string to find
-     * @param user object {@link User}, to whom the sought card belongs
-     * @return object {@link Card}
-     * @throws CardNotFoundException If the card with the specified number is not found on the user's account
-     */
-    @Deprecated
-    private Card findCardByNumber(String cardNumber, User user) {
-        //TODO Temporary solution (rewrite to cardHash)
-        return cardRepository.findAllByUser(user).stream()
-                .filter(card -> aesEncryption.decrypt(card.getEncryptedNumber()).equals(cardNumber))
-                .findFirst()
-                .orElseThrow(() -> new CardNotFoundException("You don't have a card with that number - " + cardNumber + "."));
     }
 
     /**
