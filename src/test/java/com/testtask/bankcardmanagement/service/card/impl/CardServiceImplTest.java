@@ -818,4 +818,72 @@ class CardServiceImplTest {
         verify(cardRepository).existsById(id);
         assertFalse(actualExist);
     }
+
+    @Test
+    void findCardByNumber_whenCardExist_shouldReturnCard() {
+        // Given
+        User owner = new User();
+        String searchedCardNumber = "searchedCardNumber"; // card2
+        String notSearchedCardNumber = "notSearchedCardNumber";
+
+        Card card1 = new Card();
+        card1.setId(1L);
+        card1.setEncryptedNumber("encrypted_card1_number");
+        card1.setUser(owner);
+        Card card2 = new Card();
+        card2.setId(2L);
+        card2.setEncryptedNumber("encrypted_card2_number");
+        card2.setUser(owner);
+
+        owner.setCards(List.of(card1, card2));
+
+        when(cardRepository.findAllByUser(owner)).thenReturn(List.of(card1, card2));
+        when(aesEncryption.decrypt(card1.getEncryptedNumber())).thenReturn(notSearchedCardNumber);
+        when(aesEncryption.decrypt(card2.getEncryptedNumber())).thenReturn(searchedCardNumber);
+
+        // When
+        Card actualCard = underTest.findCardByNumber(searchedCardNumber, owner);
+
+        // Then
+        assertThat(actualCard.getUser()).isEqualTo(owner);
+        assertThat(actualCard.getEncryptedNumber()).isEqualTo(card2.getEncryptedNumber());
+
+        verify(cardRepository).findAllByUser(owner);
+        verify(aesEncryption).decrypt(card1.getEncryptedNumber());
+        verify(aesEncryption).decrypt(card2.getEncryptedNumber());
+    }
+
+    @Test
+    void findCardByNumber_whenCardDoesntExist_shouldThrowCardNotFoundException() {
+        // Given
+        User owner = new User();
+        String searchedCardNumber = "searchedCardNumber"; // card2
+        String notSearchedCardNumber = "notSearchedCardNumber";
+
+        Card card1 = new Card();
+        card1.setId(1L);
+        card1.setEncryptedNumber("encrypted_card1_number");
+        card1.setUser(owner);
+        Card card2 = new Card();
+        card2.setId(2L);
+        card2.setEncryptedNumber("encrypted_card2_number");
+        card2.setUser(owner);
+
+        when(cardRepository.findAllByUser(owner)).thenReturn(List.of(card1, card2));
+        when(aesEncryption.decrypt(card1.getEncryptedNumber())).thenReturn(notSearchedCardNumber);
+        when(aesEncryption.decrypt(card2.getEncryptedNumber())).thenReturn(notSearchedCardNumber);
+
+        // When
+        CardNotFoundException exception = assertThrows(
+                CardNotFoundException.class,
+                () -> underTest.findCardByNumber(searchedCardNumber, owner)
+        );
+
+        // Then
+        assertThat(exception).hasMessage("You don't have a card with that number - " + searchedCardNumber + ".");
+
+        verify(cardRepository).findAllByUser(owner);
+        verify(aesEncryption).decrypt(card1.getEncryptedNumber());
+        verify(aesEncryption).decrypt(card2.getEncryptedNumber());
+    }
 }

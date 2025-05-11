@@ -1,6 +1,5 @@
 package com.testtask.bankcardmanagement.service.transaction.impl;
 
-import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.exception.transaction.TransactionDeclinedException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.Limit;
@@ -42,7 +41,6 @@ import static org.mockito.Mockito.*;
 class TransactionServiceImplTest {
     @Mock private TransactionRepository transactionRepository;
     @Mock private CardRepository cardRepository;
-    @Mock private AESEncryption aesEncryption;
     @Mock private TransactionMapper transactionMapper;
     @Mock private CardServiceImpl cardService;
     @Mock private LimitServiceImpl limitService;
@@ -106,7 +104,6 @@ class TransactionServiceImplTest {
             BigDecimal amount = new BigDecimal("50");
             BigDecimal expectedCardBalance = card2.getBalance().subtract(amount);
             String searchedCardNumber = "searchedCardNumber";
-            String notSearchedCardNumber = "notSearchedCardNumber";
             String transactionDescription = "Transaction description";
 
             TransactionWriteOffRequest transactionWriteOffRequest = new TransactionWriteOffRequest(
@@ -140,12 +137,10 @@ class TransactionServiceImplTest {
             secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
             mockedDateTime.when(LocalDateTime::now).thenReturn(transactionDateTime);
 
-            when(cardRepository.findAllByUser(user)).thenReturn(List.of(card1, card2));
+            when(cardService.findCardByNumber(searchedCardNumber, user)).thenReturn(card2);
             when(cardService.validateCardOwnership(card2.getId())).thenReturn(true);
             when(cardService.isCardAvailable(card2)).thenReturn(true);
             doNothing().when(limitService).checkCardLimits(card2, amount);
-            when(aesEncryption.decrypt(card1.getEncryptedNumber())).thenReturn(notSearchedCardNumber);
-            when(aesEncryption.decrypt(card2.getEncryptedNumber())).thenReturn(searchedCardNumber);
             when(cardRepository.save(card2)).thenReturn(card2);
             when(transactionRepository.save(any(Transaction.class))).thenReturn(expectedTransaction);
             when(transactionMapper.toTransactionResponse(expectedTransaction)).thenReturn(expectedTransactionResponse);
@@ -172,9 +167,7 @@ class TransactionServiceImplTest {
             assertThat(actualTransactionResponse.targetCard()).isEqualTo(expectedTransactionResponse.targetCard());
             assertThat(actualTransactionResponse.description()).isEqualTo(expectedTransactionResponse.description());
 
-            verify(cardRepository).findAllByUser(user);
-            verify(aesEncryption).decrypt(card1.getEncryptedNumber());
-            verify(aesEncryption).decrypt(card2.getEncryptedNumber());
+            verify(cardService).findCardByNumber(searchedCardNumber, user);
             verify(cardService).validateCardOwnership(card2.getId());
             verify(cardService).isCardAvailable(card2);
             verify(limitService).checkCardLimits(card2, amount);
@@ -198,8 +191,7 @@ class TransactionServiceImplTest {
             );
 
             secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
-            when(cardRepository.findAllByUser(user)).thenReturn(List.of(card1, card2));
-            when(aesEncryption.decrypt(card1.getEncryptedNumber())).thenReturn(searchedCardNumber);
+            when(cardService.findCardByNumber(searchedCardNumber, user)).thenReturn(card1);
             when(cardService.validateCardOwnership(card1.getId())).thenReturn(true);
             when(cardService.isCardAvailable(card1)).thenReturn(false);
 
@@ -212,8 +204,7 @@ class TransactionServiceImplTest {
             // Then
             assertThat(exception).hasMessage("The card is not valid.");
 
-            verify(cardRepository).findAllByUser(user);
-            verify(aesEncryption).decrypt(card1.getEncryptedNumber());
+            verify(cardService).findCardByNumber(searchedCardNumber, user);
             verify(cardService).validateCardOwnership(card1.getId());
             verify(cardService).isCardAvailable(card1);
             verifyNoMoreInteractions(cardRepository);
@@ -237,8 +228,7 @@ class TransactionServiceImplTest {
             );
 
             secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
-            when(cardRepository.findAllByUser(user)).thenReturn(List.of(card1, card2));
-            when(aesEncryption.decrypt(card1.getEncryptedNumber())).thenReturn(searchedCardNumber);
+            when(cardService.findCardByNumber(searchedCardNumber, user)).thenReturn(card1);
             when(cardService.validateCardOwnership(card1.getId())).thenReturn(false);
 
             // When
@@ -250,19 +240,13 @@ class TransactionServiceImplTest {
             // Then
             assertThat(exception).hasMessage("Card does not belong to the user.");
 
-            verify(cardRepository).findAllByUser(user);
-            verify(aesEncryption).decrypt(card1.getEncryptedNumber());
+            verify(cardService).findCardByNumber(searchedCardNumber, user);
             verify(cardService).validateCardOwnership(card1.getId());
             verifyNoMoreInteractions(cardRepository);
             verifyNoMoreInteractions(cardService);
             verifyNoInteractions(transactionRepository);
             verifyNoInteractions(transactionMapper);
         }
-    }
-
-    @Test
-    void writeOff_whenCardNotFound_shouldThrowCardNotFoundException() {
-
     }
 
     @Test
