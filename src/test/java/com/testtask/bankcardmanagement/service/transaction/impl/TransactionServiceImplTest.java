@@ -18,6 +18,7 @@ import com.testtask.bankcardmanagement.model.mapper.TransactionMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.TransactionRepository;
 import com.testtask.bankcardmanagement.service.card.impl.CardServiceImpl;
+import com.testtask.bankcardmanagement.service.limit.impl.LimitServiceImpl;
 import com.testtask.bankcardmanagement.service.security.SecurityUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +45,7 @@ class TransactionServiceImplTest {
     @Mock private AESEncryption aesEncryption;
     @Mock private TransactionMapper transactionMapper;
     @Mock private CardServiceImpl cardService;
+    @Mock private LimitServiceImpl limitService;
     @InjectMocks private TransactionServiceImpl underTest;
 
     private User user;
@@ -105,19 +107,20 @@ class TransactionServiceImplTest {
             BigDecimal expectedCardBalance = card2.getBalance().subtract(amount);
             String searchedCardNumber = "searchedCardNumber";
             String notSearchedCardNumber = "notSearchedCardNumber";
+            String transactionDescription = "Transaction description";
 
             TransactionWriteOffRequest transactionWriteOffRequest = new TransactionWriteOffRequest(
                     searchedCardNumber,
                     amount,
-                    null
+                    transactionDescription
             );
 
             Transaction expectedTransaction = new Transaction();
             expectedTransaction.setCard(card2);
             expectedTransaction.setType(TransactionType.WRITE_OFF);
             expectedTransaction.setAmount(amount);
-            expectedTransaction.setTransactionDate(null);
             expectedTransaction.setTransactionDate(transactionDateTime);
+            expectedTransaction.setDescription(transactionDescription);
 
             TransactionResponse expectedTransactionResponse = new TransactionResponse(
               amount,
@@ -131,7 +134,7 @@ class TransactionServiceImplTest {
                       List.of(new LimitResponse(limit2.getLimitType(), limit2.getMaxAmount()))),
               null,
               transactionDateTime,
-              null
+              transactionDescription
             );
 
             secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
@@ -140,6 +143,7 @@ class TransactionServiceImplTest {
             when(cardRepository.findAllByUser(user)).thenReturn(List.of(card1, card2));
             when(cardService.validateCardOwnership(card2.getId())).thenReturn(true);
             when(cardService.isCardAvailable(card2)).thenReturn(true);
+            doNothing().when(limitService).checkCardLimits(card2, amount);
             when(aesEncryption.decrypt(card1.getEncryptedNumber())).thenReturn(notSearchedCardNumber);
             when(aesEncryption.decrypt(card2.getEncryptedNumber())).thenReturn(searchedCardNumber);
             when(cardRepository.save(card2)).thenReturn(card2);
@@ -171,6 +175,9 @@ class TransactionServiceImplTest {
             verify(cardRepository).findAllByUser(user);
             verify(aesEncryption).decrypt(card1.getEncryptedNumber());
             verify(aesEncryption).decrypt(card2.getEncryptedNumber());
+            verify(cardService).validateCardOwnership(card2.getId());
+            verify(cardService).isCardAvailable(card2);
+            verify(limitService).checkCardLimits(card2, amount);
             verify(cardRepository).save(card2);
             verify(transactionMapper).toTransactionResponse(expectedTransaction);
         }
@@ -183,7 +190,6 @@ class TransactionServiceImplTest {
             // sender - card1
             BigDecimal amount = new BigDecimal("10");
             String searchedCardNumber = "searchedCardNumber";
-            String notSearchedCardNumber = "notSearchedCardNumber";
 
             TransactionWriteOffRequest transactionWriteOffRequest = new TransactionWriteOffRequest(
                     searchedCardNumber,
@@ -194,7 +200,6 @@ class TransactionServiceImplTest {
             secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
             when(cardRepository.findAllByUser(user)).thenReturn(List.of(card1, card2));
             when(aesEncryption.decrypt(card1.getEncryptedNumber())).thenReturn(searchedCardNumber);
-//            when(aesEncryption.decrypt(card2.getEncryptedNumber())).thenReturn(notSearchedCardNumber);
             when(cardService.validateCardOwnership(card1.getId())).thenReturn(true);
             when(cardService.isCardAvailable(card1)).thenReturn(false);
 
@@ -209,7 +214,6 @@ class TransactionServiceImplTest {
 
             verify(cardRepository).findAllByUser(user);
             verify(aesEncryption).decrypt(card1.getEncryptedNumber());
-//            verify(aesEncryption).decrypt(card2.getEncryptedNumber());
             verify(cardService).validateCardOwnership(card1.getId());
             verify(cardService).isCardAvailable(card1);
             verifyNoMoreInteractions(cardRepository);
@@ -225,7 +229,6 @@ class TransactionServiceImplTest {
             // sender - card1
             BigDecimal amount = new BigDecimal("20");
             String searchedCardNumber = "searchedCardNumber";
-            String notSearchedCardNumber = "notSearchedCardNumber";
 
             TransactionWriteOffRequest transactionWriteOffRequest = new TransactionWriteOffRequest(
                     searchedCardNumber,
@@ -259,11 +262,6 @@ class TransactionServiceImplTest {
 
     @Test
     void writeOff_whenCardNotFound_shouldThrowCardNotFoundException() {
-        
-    }
-
-    @Test
-    void writeOff_whenLimitExceeded_shouldThrowLimitExceededException() {
 
     }
 
