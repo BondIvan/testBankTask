@@ -7,7 +7,9 @@ import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
 import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
@@ -27,6 +29,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -250,14 +254,318 @@ class TransactionServiceImplTest {
     }
 
     @Test
-    void transfer() {
+    void transfer_whenSenderAndReceiverCardBelongsToUser_shouldReturnTransactionResponseDto() {
+        LocalDateTime transactionDateTime = LocalDateTime.of(2025, 1, 1, 10, 0, 0);
+        try(
+                MockedStatic<SecurityUtil> secureUtil = mockStatic(SecurityUtil.class);
+                MockedStatic<LocalDateTime> mockDateTime = mockStatic(LocalDateTime.class)
+        ) {
+            // Given
+            Card senderCard = card1;
+            Card receiverCard = card2;
+            String senderCardNumber = "1111222233334444";
+            String receiverCardNumber = "5555666677778888";
+            String maskedSenderCardNumber = "**** **** **** " + senderCardNumber.substring(12);
+            String maskedReceiverCardNumber = "**** **** **** " + receiverCardNumber.substring(12);
+
+            BigDecimal amount = new BigDecimal("150");
+            BigDecimal expectedSenderCardBalance = card1.getBalance().subtract(amount);
+            BigDecimal expectedReceiverCardBalance = card2.getBalance().add(amount);
+
+            String transactionDescription = "transaction description";
+
+            TransactionTransferRequest transactionTransferRequest = new TransactionTransferRequest(
+                    senderCardNumber,
+                    receiverCardNumber,
+                    amount,
+                    transactionDescription
+            );
+
+            Transaction expectedSenderTransaction = new Transaction();
+            expectedSenderTransaction.setCard(card1);
+            expectedSenderTransaction.setType(TransactionType.WRITE_OFF);
+            expectedSenderTransaction.setTransactionDate(transactionDateTime);
+            expectedSenderTransaction.setAmount(amount);
+            expectedSenderTransaction.setDescription(transactionDescription);
+            expectedSenderTransaction.setTargetMaskedCard(maskedReceiverCardNumber);
+
+            Transaction expectedReceiverTransaction = new Transaction();
+            expectedReceiverTransaction.setCard(card2);
+            expectedReceiverTransaction.setType(TransactionType.REPLENISHMENT);
+            expectedReceiverTransaction.setTransactionDate(transactionDateTime);
+            expectedReceiverTransaction.setAmount(amount);
+            expectedReceiverTransaction.setDescription(transactionDescription);
+            expectedReceiverTransaction.setTargetMaskedCard(maskedSenderCardNumber);
+
+            TransactionResponse expectedSenderTransactionResponse = new TransactionResponse(
+                    amount,
+                    TransactionType.WRITE_OFF,
+                    new CardResponse(
+                            maskedSenderCardNumber,
+                            LocalDate.now().plusYears(1),
+                            new UserResponse(null, null),
+                            card1.getStatus(),
+                            expectedSenderCardBalance,
+                            List.of(new LimitResponse(limit1.getLimitType(), limit1.getMaxAmount()))),
+                    maskedReceiverCardNumber,
+                    transactionDateTime,
+                    transactionDescription
+            );
+
+            secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
+            mockDateTime.when(LocalDateTime::now).thenReturn(transactionDateTime);
+
+            when(cardService.findCardByNumber(senderCardNumber, user)).thenReturn(senderCard);
+            when(cardService.findCardByNumber(receiverCardNumber, user)).thenReturn(receiverCard);
+            when(cardService.validateCardOwnership(senderCard.getId())).thenReturn(true);
+            when(cardService.validateCardOwnership(receiverCard.getId())).thenReturn(true);
+            when(cardRepository.saveAll(List.of(senderCard, receiverCard))).thenReturn(List.of(senderCard, receiverCard));
+            when(transactionRepository.saveAll(anyList())).thenReturn(List.of(expectedSenderTransaction, expectedReceiverTransaction));
+            when(transactionMapper.toTransactionResponse(expectedSenderTransaction)).thenReturn(expectedSenderTransactionResponse);
+
+            // When
+            TransactionResponse actualSenderTransactionResponse = underTest.transfer(transactionTransferRequest);
+
+            // Then
+            ArgumentCaptor<List<Transaction>> transactionCaptor = ArgumentCaptor.forClass(List.class);
+            verify(transactionRepository).saveAll(transactionCaptor.capture());
+            List<Transaction> actualListTransaction = transactionCaptor.getValue();
+            Transaction actualSenderTransaction = actualListTransaction.get(0);
+            Transaction actualReceiverTransaction = actualListTransaction.get(1);
+
+            assertThat(actualSenderTransaction.getCard()).isEqualTo(expectedSenderTransaction.getCard());
+            assertThat(actualSenderTransaction.getTransactionDate()).isEqualTo(expectedSenderTransaction.getTransactionDate());
+            assertThat(actualSenderTransaction.getType()).isEqualTo(expectedSenderTransaction.getType());
+            assertThat(actualSenderTransaction.getAmount()).isEqualByComparingTo(expectedSenderTransaction.getAmount());
+            assertThat(actualSenderTransaction.getTargetMaskedCard()).isEqualTo(expectedSenderTransaction.getTargetMaskedCard());
+            assertThat(actualSenderTransaction.getDescription()).isEqualTo(expectedSenderTransaction.getDescription());
+
+            assertThat(actualReceiverTransaction.getCard()).isEqualTo(expectedReceiverTransaction.getCard());
+            assertThat(actualReceiverTransaction.getTransactionDate()).isEqualTo(expectedReceiverTransaction.getTransactionDate());
+            assertThat(actualReceiverTransaction.getType()).isEqualTo(expectedReceiverTransaction.getType());
+            assertThat(actualReceiverTransaction.getAmount()).isEqualByComparingTo(expectedReceiverTransaction.getAmount());
+            assertThat(actualReceiverTransaction.getTargetMaskedCard()).isEqualTo(expectedReceiverTransaction.getTargetMaskedCard());
+            assertThat(actualReceiverTransaction.getDescription()).isEqualTo(expectedReceiverTransaction.getDescription());
+
+            assertThat(actualSenderTransactionResponse.card()).isEqualTo(expectedSenderTransactionResponse.card());
+            assertThat(actualSenderTransactionResponse.datetime()).isEqualTo(expectedSenderTransactionResponse.datetime());
+            assertThat(actualSenderTransactionResponse.type()).isEqualTo(expectedSenderTransactionResponse.type());
+            assertThat(actualSenderTransactionResponse.amount()).isEqualByComparingTo(expectedSenderTransactionResponse.amount());
+            assertThat(actualSenderTransactionResponse.targetCard()).isEqualTo(expectedSenderTransactionResponse.targetCard());
+            assertThat(actualSenderTransactionResponse.description()).isEqualTo(expectedSenderTransactionResponse.description());
+
+            assertThat(senderCard.getBalance()).isEqualByComparingTo(expectedSenderCardBalance);
+            assertThat(receiverCard.getBalance()).isEqualByComparingTo(expectedReceiverCardBalance);
+
+            verify(cardService).findCardByNumber(senderCardNumber, user);
+            verify(cardService).findCardByNumber(receiverCardNumber, user);
+            verify(cardService).validateCardOwnership(senderCard.getId());
+            verify(cardService).validateCardOwnership(receiverCard.getId());
+            verify(cardRepository).saveAll(List.of(senderCard, receiverCard));
+            verify(transactionMapper).toTransactionResponse(expectedSenderTransaction);
+        }
     }
 
     @Test
-    void getTransactionsByUserCard() {
+    void transfer_whenSenderCardDoesntBelongsToUser_shouldThrowTransactionDeclinedException() {
+        try(MockedStatic<SecurityUtil> secureUtil = mockStatic(SecurityUtil.class)) {
+            // Given
+            Card senderCard = card1;
+            Card receiverCard = card2;
+            String senderCardNumber = "1111222233334444";
+            String receiverCardNumber = "5555666677778888";
+
+            BigDecimal amount = new BigDecimal("150");
+
+            TransactionTransferRequest transactionTransferRequest = new TransactionTransferRequest(
+                    senderCardNumber,
+                    receiverCardNumber,
+                    amount,
+                    null
+            );
+
+            secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
+            when(cardService.findCardByNumber(senderCardNumber, user)).thenReturn(senderCard);
+            when(cardService.findCardByNumber(receiverCardNumber, user)).thenReturn(receiverCard);
+            when(cardService.validateCardOwnership(senderCard.getId())).thenReturn(false);
+
+            // When
+            TransactionDeclinedException exception = assertThrows(
+                    TransactionDeclinedException.class,
+                    () -> underTest.transfer(transactionTransferRequest)
+            );
+
+            // Then
+            assertThat(exception).hasMessage("Card does not belong to the user.");
+
+            verify(cardService).findCardByNumber(senderCardNumber, user);
+            verify(cardService).findCardByNumber(receiverCardNumber, user);
+            verify(cardService).validateCardOwnership(senderCard.getId());
+            verifyNoMoreInteractions(cardService);
+            verifyNoInteractions(cardRepository);
+            verifyNoInteractions(transactionRepository);
+            verifyNoInteractions(transactionMapper);
+        }
     }
 
     @Test
-    void getTransactionsByCard() {
+    void transfer_whenReceiverCardDoesntBelongsToUser_shouldThrowTransactionDeclinedException() {
+        try(MockedStatic<SecurityUtil> secureUtil = mockStatic(SecurityUtil.class)) {
+            // Given
+            Card senderCard = card1;
+            Card receiverCard = card2;
+            String senderCardNumber = "1111222233334444";
+            String receiverCardNumber = "5555666677778888";
+
+            BigDecimal amount = new BigDecimal("150");
+
+            TransactionTransferRequest transactionTransferRequest = new TransactionTransferRequest(
+                    senderCardNumber,
+                    receiverCardNumber,
+                    amount,
+                    null
+            );
+
+            secureUtil.when(SecurityUtil::getCurrentUser).thenReturn(user);
+            when(cardService.findCardByNumber(senderCardNumber, user)).thenReturn(senderCard);
+            when(cardService.findCardByNumber(receiverCardNumber, user)).thenReturn(receiverCard);
+            when(cardService.validateCardOwnership(senderCard.getId())).thenReturn(true);
+            when(cardService.validateCardOwnership(receiverCard.getId())).thenReturn(false);
+
+            // When
+            TransactionDeclinedException exception = assertThrows(
+                    TransactionDeclinedException.class,
+                    () -> underTest.transfer(transactionTransferRequest)
+            );
+
+            // Then
+            assertThat(exception).hasMessage("Card does not belong to the user.");
+
+            verify(cardService).findCardByNumber(senderCardNumber, user);
+            verify(cardService).findCardByNumber(receiverCardNumber, user);
+            verify(cardService).validateCardOwnership(senderCard.getId());
+            verify(cardService).validateCardOwnership(receiverCard.getId());
+            verifyNoInteractions(cardRepository);
+            verifyNoInteractions(transactionRepository);
+            verifyNoInteractions(transactionMapper);
+        }
+    }
+
+    @Test
+    void getTransactionsByUserCard_whenCardExistAndBelongsToUser_shouldReturnPageOfTransactionResponse() {
+        // Given
+        Card usedCard = card1;
+
+        TransactionType type = TransactionType.WRITE_OFF;
+        int page = 0;
+        int size = 10;
+        List<String> sortList = List.of("id", "card.status", "amount");
+        Sort sortBy = Sort.by(List.of(
+                Sort.Order.desc("id"),
+                Sort.Order.desc("card.status"),
+                Sort.Order.desc("amount")
+        ));
+        String sortOrder = "desc";
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                sortBy
+        );
+
+        LocalDateTime from = LocalDateTime.of(2025, 1, 1, 10, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2025, 2, 1, 10, 0, 0);
+        TransactionParamFilter filter = new TransactionParamFilter(
+                usedCard.getId(),
+                type,
+                from,
+                to,
+                false
+        );
+
+        BigDecimal amount = new BigDecimal("100");
+        Transaction transaction1 = new Transaction();
+        transaction1.setCard(usedCard);
+        transaction1.setType(TransactionType.WRITE_OFF);
+//        transaction1.setTransactionDate(transactionDateTime);
+        transaction1.setAmount(amount);
+
+//        Transaction transaction2 = new Transaction();
+//        transaction2.setCard(usedCard);
+//        transaction2.setType(TransactionType.REPLENISHMENT);
+//        transaction2.setTransactionDate(transactionDateTime);
+//        transaction2.setAmount(new BigDecimal("200"));
+
+        TransactionResponse expectedSenderTransactionResponse = new TransactionResponse(
+                amount,
+                TransactionType.WRITE_OFF,
+                new CardResponse(
+                        null,
+                        LocalDate.now().plusYears(1),
+                        null,
+                        card1.getStatus(),
+                        card1.getBalance(),
+                        List.of(new LimitResponse(limit1.getLimitType(), limit1.getMaxAmount()))),
+                null,
+                null,
+                null
+        );
+
+        List<Transaction> transactionsFromDB = List.of(transaction1);
+
+        Page<Transaction> pageFromDB = new PageImpl<>(
+                transactionsFromDB,
+                pageable,
+                transactionsFromDB.size()
+        );
+
+        when(cardService.validateCardOwnership(usedCard.getId())).thenReturn(true);
+        when(transactionRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(pageFromDB);
+        when(transactionMapper.toTransactionResponse(transaction1)).thenReturn(expectedSenderTransactionResponse);
+
+
+        // When
+        Page<TransactionResponse> actualPage = underTest.getTransactionsByUserCard(
+                usedCard.getId(), filter, page, size, sortList, sortOrder);
+
+        // Then
+        assertThat(actualPage).isNotNull();
+        assertThat(actualPage.getContent()).hasSize(1);
+        assertThat(actualPage.getContent().get(0)).isEqualTo(expectedSenderTransactionResponse);
+        assertThat(actualPage.getPageable().getPageNumber()).isEqualTo(page);
+        assertThat(actualPage.getPageable().getPageSize()).isEqualTo(size);
+        assertThat(actualPage.getTotalElements()).isEqualTo(transactionsFromDB.size());
+
+        verify(cardService).validateCardOwnership(usedCard.getId());
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(transactionRepository).findAll(any(Specification.class), pageableCaptor.capture());
+        Pageable capturedPageable = pageableCaptor.getValue();
+
+        assertThat(capturedPageable.getPageNumber()).isEqualTo(page);
+        assertThat(capturedPageable.getPageSize()).isEqualTo(size);
+        assertThat(capturedPageable.getSort()).isEqualTo(sortBy);
+
+        verify(transactionMapper).toTransactionResponse(transaction1);
+    }
+
+    @Test
+    void getTransactionsByUserCard_whenCardDoesntBelongsToUser_shouldThrowCardNotFoundException() {
+        // Given
+        // When
+        // Then
+    }
+
+    @Test
+    void getTransactionsByCard_whenCardExist_shouldReturnPageOfTransactionResponse() {
+        // Given
+        // When
+        // Then
+    }
+
+    @Test
+    void getTransactionsByCard_whenCardDoesntExist_shouldThrowCardNotFoundException() {
+        // Given
+        // When
+        // Then
     }
 }
