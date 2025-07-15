@@ -186,7 +186,7 @@ public class TransactionServiceImpl implements TransactionService {
                                                                int page, int size,
                                                                List<String> sortList, String sortOrder) {
         if(!cardService.validateCardOwnership(cardId))
-            throw new TransactionDeclinedException("Card does not belong to the user.");
+            throw new CardNotFoundException("Card does not belong to the user.");
 
         TransactionParamFilter updatedFilter = new TransactionParamFilter(
                 cardId,
@@ -217,6 +217,9 @@ public class TransactionServiceImpl implements TransactionService {
     public Page<TransactionResponse> getTransactionsByCard(Long cardId, TransactionParamFilter transactionParamFilter,
                                                            int page, int size,
                                                            List<String> sortList, String sortOrder) {
+        if(!cardService.existById(cardId))
+            throw new CardNotFoundException("Card with such id not found.");
+
 
         TransactionParamFilter updatedFilter = new TransactionParamFilter(
                 cardId,
@@ -247,9 +250,6 @@ public class TransactionServiceImpl implements TransactionService {
     private Page<TransactionResponse> getAllTransactionsByCard(TransactionParamFilter filter,
                                                                int page, int size,
                                                                List<String> sortList, String sortOrder) {
-
-        if(!cardService.existById(filter.cardId()))
-            throw new CardNotFoundException("The card with such id not found");
 
         List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
