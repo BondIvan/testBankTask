@@ -37,13 +37,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-/**
- * Service for operations with card transactions
- * @see CardService
- * @see Card
- * @see Transaction
- * @see AESEncryption
- */
 @RequiredArgsConstructor
 @Service
 public class TransactionServiceImpl implements TransactionService {
@@ -54,14 +47,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final CardService cardService;
     private final LimitService limitService;
 
-    /**
-     * Method for transferring funds between user cards
-     * @param transactionTransferRequest a request object containing the translation details
-     * @return an object {@link TransactionResponse} containing information about the transaction carried out
-     * @see TransactionTransferRequest
-     * @see TransactionResponse
-     * @throws TransactionDeclinedException If the card does not belong to the user
-     */
     @Override
     @Transactional
     public TransactionResponse transfer(TransactionTransferRequest transactionTransferRequest) {
@@ -102,14 +87,6 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapper.toTransactionResponse(savedTransactions.get(0));
     }
 
-    /**
-     * Method for debiting funds from the user's card
-     * @param transactionWriteOffRequest request object containing the write-off details
-     * @return an object {@link TransactionResponse} containing information about the transaction carried out
-     * @see TransactionWriteOffRequest
-     * @see TransactionResponse
-     * @throws TransactionDeclinedException If the card does not belong to the user or the card is not valid
-     */
     @Override
     @Transactional
     public TransactionResponse writeOff(TransactionWriteOffRequest transactionWriteOffRequest) {
@@ -141,19 +118,6 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapper.toTransactionResponse(savedTransaction);
     }
 
-    /**
-     * Method for creating a transaction object
-     * @param card the card for which the transfer or debit operation is performed
-     * @param type transaction type
-     * @param amount the amount of funds involved in the transaction
-     * @param description transaction description
-     * @param target masked recipient card number
-     * @param dateTime transaction time
-     * @return {@link Transaction} object
-     * @see TransactionWriteOffRequest
-     * @see TransactionResponse
-     * @see TransactionType
-     */
     private Transaction createTransaction(Card card, TransactionType type, BigDecimal amount,
                                           String description, String target, LocalDateTime dateTime) {
         Transaction transaction = new Transaction();
@@ -167,20 +131,6 @@ public class TransactionServiceImpl implements TransactionService {
         return transaction;
     }
 
-    /**
-     * Method to get all transactions of the specified card for the current user, checking if the card belongs to the user
-     * @param cardId card id for which transactions need to be received
-     * @param transactionParamFilter request object containing filter criteria
-     * @param page page number
-     * @param size page size
-     * @param sortList list of fields to sort by
-     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
-     * @return an object {@link Page<TransactionResponse>} representing a page of transactions
-     * @see TransactionParamFilter
-     * @see Page
-     * @see TransactionResponse
-     * @throws TransactionDeclinedException If the card does not belong to the user
-     */
     @Override
     public Page<TransactionResponse> getTransactionsByUserCard(Long cardId, TransactionParamFilter transactionParamFilter,
                                                                int page, int size,
@@ -199,20 +149,6 @@ public class TransactionServiceImpl implements TransactionService {
         return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
     }
 
-    /**
-     * Method to get all transactions for a specified card
-     * @param cardId card id for which transactions need to be received
-     * @param transactionParamFilter request object containing filter criteria
-     * @param page page number
-     * @param size page size
-     * @param sortList list of fields to sort by
-     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
-     * @return an object {@link Page<TransactionResponse>} representing a page of transactions
-     * @see TransactionParamFilter
-     * @see Page
-     * @see TransactionResponse
-     * @throws TransactionDeclinedException If the card does not belong to the user
-     */
     @Override
     public Page<TransactionResponse> getTransactionsByCard(Long cardId, TransactionParamFilter transactionParamFilter,
                                                            int page, int size,
@@ -232,21 +168,6 @@ public class TransactionServiceImpl implements TransactionService {
         return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
     }
 
-    /**
-     * Method to get all transactions on a card
-     * @param filter request object containing filter criteria
-     * @param page page number
-     * @param size page size
-     * @param sortList list of fields to sort by
-     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
-     * @return an object {@link Page<TransactionResponse>} representing a page of transactions
-     * @see TransactionParamFilter
-     * @see Page
-     * @see TransactionResponse
-     * @see Sort.Order
-     * @see TransactionSpecification
-     * @throws CardNotFoundException If the card is not found
-     */
     private Page<TransactionResponse> getAllTransactionsByCard(TransactionParamFilter filter,
                                                                int page, int size,
                                                                List<String> sortList, String sortOrder) {
@@ -267,22 +188,10 @@ public class TransactionServiceImpl implements TransactionService {
         );
     }
 
-    /**
-     * The method masks the card number, leaving only the last 4 digits visible
-     * @param number a string representation of the card number to be masked
-     * @return {@code String} masked card number in the format "**** **** **** xxxx", where xxxx are the last 4 digits
-     */
     private String maskTargetNumber(String number) {
         return "**** **** **** " + number.substring(12);
     }
 
-    /**
-     * The method creates a list of {@link Sort.Order} objects for use in sort queries.
-     * @param sortList  list of fields to sort by
-     * @param sortOrder sort direction (ASC - ascending / DESC - descending)
-     * @return list of {@link Sort.Order}
-     * @see Sort.Order
-     */
     private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
         Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
         return sortList.stream()
