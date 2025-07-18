@@ -3,22 +3,19 @@ package com.testtask.bankcardmanagement.controller;
 import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
-import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
-import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
-import com.testtask.bankcardmanagement.model.dto.user.UserRequest;
-import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
+import com.testtask.bankcardmanagement.model.enums.CardStatus;
+import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
-import com.testtask.bankcardmanagement.service.user.UserService;
+import com.testtask.bankcardmanagement.service.user.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -41,21 +39,15 @@ public class AdminController {
     private static final Set<String> SORTABLE_CARD_FIELDS = Set.of("id", "user.email", "status");
     private static final Set<String> SORTABLE_TRANSACTION_FIELDS = Set.of("id", "type", "amount");
 
-    private final UserService userService;
     private final CardService cardService;
-    private final AuthenticationService authenticationService;
     private final TransactionService transactionService;
+    private final AdminService adminService;
 
     @PostMapping("/create-user")
     public ResponseEntity<AuthenticationResponse> createUser(@RequestBody @Valid RegistrationRequest registrationRequest) {
-        AuthenticationResponse authenticationResponse = authenticationService.register(registrationRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(authenticationResponse);
-    }
-
-    @PutMapping("/update-user")
-    public ResponseEntity<UserResponse> updateUser(@RequestBody @Valid UserRequest userRequest, @RequestBody @Valid String email) {
-        //TODO Finish it off
-        return null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                adminService.createUser(registrationRequest)
+        );
     }
 
     @DeleteMapping("/delete-user")
@@ -65,8 +57,8 @@ public class AdminController {
     }
 
     @PostMapping("/create-card")
-    public ResponseEntity<CardResponse> createCard(@RequestBody @Valid CardRequest cardRequest) {
-        CardResponse response = cardService.createCard(cardRequest);
+    public ResponseEntity<CardResponse> createCard(@RequestBody @Valid CreateCardRequest createCardRequest) {
+        CardResponse response = cardService.createCard(createCardRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -90,34 +82,40 @@ public class AdminController {
 
     @GetMapping("/get-all-cards")
     public ResponseEntity<Page<CardResponse>> getAllCards(
-            @RequestBody() @Valid CardParamFilter paramFilter,
+//            @RequestBody() @Valid CardParamFilter paramFilter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "null") CardStatus cardStatus,
+            @RequestParam(defaultValue = "null") Long userId,
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     )
     {
         validateCardSortFields(sortList);
         return ResponseEntity.ok(
-                cardService.getAllCards(paramFilter, page, size, sortList, sortOrder)
+                cardService.getAllCards(paramFilter, page, size, cardStatus, userId, sortList, sortOrder)
         );
     }
 
     @GetMapping("/get-transactions-by-card/{cardId}")
     public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,
-            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
+//            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "null") TransactionType type,
+            @RequestParam(defaultValue = "null") LocalDateTime from,
+            @RequestParam(defaultValue = "null") LocalDateTime to,
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {
         validateTransactionSortFields(sortList);
         return ResponseEntity.ok(
-                transactionService.getTransactionsByCard(cardId, transactionParamFilter, page, size, sortList, sortOrder)
+                transactionService.getTransactionsByCard(cardId, transactionParamFilter, type, from, to, page, size, sortList, sortOrder)
         );
     }
 
+    //TODO Это должно быть у пользователя
     @PutMapping("/update-limits/{cardId}")
     public ResponseEntity<CardResponse> setDayCardLimit(@PathVariable("cardId") Long cardId,
                                                         @RequestBody @Valid LimitUpdateRequest limitUpdateRequest) {

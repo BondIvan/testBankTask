@@ -8,8 +8,13 @@ import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
 import com.testtask.bankcardmanagement.model.dto.user.BlockRequest;
+import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
+import com.testtask.bankcardmanagement.model.dto.user.EmailReplacementRequest;
+import com.testtask.bankcardmanagement.model.dto.user.PasswordReplacementRequest;
+import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
+import com.testtask.bankcardmanagement.service.user.impl.UserProfileServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +39,24 @@ public class UserController {
 
     private final TransactionService transactionService;
     private final CardService cardService;
+    private final UserProfileServiceImpl userProfileServiceImpl;
+
+    @PostMapping("/update-email/{userId}")
+    public ResponseEntity<CommonUserResponse> updateUserEmail(
+            @PathVariable("userId") Long userId,
+            @RequestBody @Valid EmailReplacementRequest emailReplacementRequest
+    ) {
+        return ResponseEntity.ok(userProfileServiceImpl.changeUserEmail(userId, emailReplacementRequest));
+    }
+
+    @PostMapping("/update-password/{userId}")
+    public ResponseEntity<String> updatePassword(
+            @PathVariable("userId") Long userId,
+            @RequestBody @Valid PasswordReplacementRequest passwordReplacementRequest
+    ) {
+        userProfileServiceImpl.changeUserPassword(userId, passwordReplacementRequest);
+        return ResponseEntity.ok("The password was successfully updated");
+    }
 
     @GetMapping("/get-all-cards")
     public ResponseEntity<Page<CardResponse>> getAllUserCards(
@@ -52,18 +76,28 @@ public class UserController {
         return null;
     }
 
+    @PostMapping("/request-active-card")
+    public ResponseEntity<String> requestToActivateUserCard(@RequestBody @Valid ActivateRequest activateRequest) {
+        //TODO Finish if off
+        return null;
+    }
+
     @GetMapping("/get-transactions-by-user-card/{cardId}")
     public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,
-            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
+//            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "null") TransactionType type,
+            @RequestParam(defaultValue = "null") LocalDateTime from,
+            @RequestParam(defaultValue = "null") LocalDateTime to,
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {
         validateSortFields(sortList);
         return ResponseEntity.ok(
-                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size, sortList, sortOrder)
+                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size,
+                        type, from, to, sortList, sortOrder)
         );
     }
 

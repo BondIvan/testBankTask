@@ -18,10 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthenticationService authenticationService;
 
-    @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
-        return ResponseEntity.ok(authenticationService.register(registrationRequest));
-    }
+    //TODO Это должен делать только admin, поэтому этот код в методе createUser в классе AdminController
+//    @PostMapping("/register")
+//    public ResponseEntity<AuthenticationResponse> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
+//        return ResponseEntity.ok(authenticationService.register(registrationRequest));
+//    }
 
     @PostMapping("authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest authenticationRequest) {

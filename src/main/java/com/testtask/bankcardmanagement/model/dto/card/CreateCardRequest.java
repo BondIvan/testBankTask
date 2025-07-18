@@ -1,6 +1,6 @@
 package com.testtask.bankcardmanagement.model.dto.card;
 
-import com.testtask.bankcardmanagement.model.dto.limit.LimitRequest;
+import com.testtask.bankcardmanagement.model.dto.limit.CreateLimitRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Future;
@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.List;
 
-public record CardRequest(
+public record CreateCardRequest(
         @NotNull
         @Pattern(regexp = "^\\d{16}$", message = "Invalid card number,should be - ____ ____ ____ ____")
         String cardNumber,
@@ -22,6 +22,7 @@ public record CardRequest(
         @Email(message = "Invalid email format")
         String ownerEmail,
 
+        //TODO Убрать это отсюда
         @Valid
-        List<LimitRequest> limits
+        List<CreateLimitRequest> limits
 ) { }
