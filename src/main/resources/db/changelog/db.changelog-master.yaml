@@ -5,3 +5,7 @@ databaseChangeLog:
       file: db/changelog/changeset/delete_fromAndTo_cardId_from_transaction.yaml
   - include:
       file: db/changelog/changeset/insert_admin_user.yaml
+  - include:
+      file: db/changelog/changeset/add_hash_number_to_cards.yaml
+  - include:
+      file: db/changelog/changeset/add_unique_and_notnull_constrains_to_hash_number_cards.yaml

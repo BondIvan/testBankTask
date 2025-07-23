@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-hash-number-to-cards
+      author: boiv
+      changes:
+        - addColumn:
+            tableName: cards
+            columns:
+              - column:
+                  name: hash_number
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: true

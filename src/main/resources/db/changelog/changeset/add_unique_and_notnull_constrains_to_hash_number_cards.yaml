@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3-add-constraints-to-hash-number
+      author: boiv
+      changes:
+        - addNotNullConstraint:
+            tableName: cards
+            columnName: hash_number
+            columnDataType: VARCHAR(255)
+            constraintName: nn_cards_hash_number
+
+        - addUniqueConstraint:
+            tableName: cards
+            columnNames: hash_number
+            constraintName: uq_cards_hash_number
