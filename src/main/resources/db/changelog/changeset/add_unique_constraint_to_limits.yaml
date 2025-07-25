@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-unique-constraint-to-limits-cardid-limittype
+      author: boiv
+      changes:
+        - addUniqueConstraint:
+            tableName: limits
+            columnNames: card_id, limit_type
+            constraintName: uq_limits_cardid_limittype 

@@ -15,7 +15,10 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "limits")
+@Table(
+        name = "limits",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"card_id", "limit_type"})
+)
 @Entity
 public class Limit {
     @Id
@@ -27,7 +30,7 @@ public class Limit {
     private Card card;
 
     @Column(name = "limit_type")
-    @Convert(converter = LimitTypeConverter.class)   //TODO Сделать ограничение-уникальность в базе данных на поля card_id и limit_type
+    @Convert(converter = LimitTypeConverter.class)
     private LimitType limitType;
 
     @Column(name = "max_amount", precision = 15, scale = 2)
