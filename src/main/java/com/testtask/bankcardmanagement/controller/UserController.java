@@ -39,22 +39,21 @@ public class UserController {
 
     private final TransactionService transactionService;
     private final CardService cardService;
+    private final UserProfileServiceImpl userProfileServiceImpl;
 
     @PostMapping("/update-email")
     public ResponseEntity<CommonUserResponse> updateUserEmail(
             @RequestBody @Valid EmailReplacementRequest emailReplacementRequest
     ) {
-//        return ResponseEntity.ok(userProfileServiceImpl.changeUserEmail(emailReplacementRequest));
-        return null;
+        return ResponseEntity.ok(userProfileServiceImpl.changeUserEmail(emailReplacementRequest));
     }
 
     @PostMapping("/update-password") //TODO Добавить rate limiting на этот эндпоинт
     public ResponseEntity<String> updatePassword(
             @RequestBody @Valid PasswordReplacementRequest passwordReplacementRequest
     ) {
-//        userProfileServiceImpl.changeUserPassword(passwordReplacementRequest);
-//        return ResponseEntity.ok("The password was successfully updated");
-        return null;
+        userProfileServiceImpl.changeUserPassword(passwordReplacementRequest);
+        return ResponseEntity.ok("The password was successfully updated");
     }
 
     @PostMapping("/card/{cardId}/update-limit")

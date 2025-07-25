@@ -1,7 +1,7 @@
 package com.testtask.bankcardmanagement.service.user.impl;
 
-import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
 import com.testtask.bankcardmanagement.exception.user.BadCredentialsException;
+import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
 import com.testtask.bankcardmanagement.model.dto.user.EmailReplacementRequest;
@@ -19,29 +19,42 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 public class UserProfileServiceImpl implements UserProfileService {
-    private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
 
     @Override
-    public CommonUserResponse changeUserEmail(Long userId, EmailReplacementRequest emailReplacementRequest) {
-        return userMapper.toUserResponse(
-                userRepository.changeUserEmailByUserId(userId, emailReplacementRequest.newEmail())
-        );
+    public CommonUserResponse changeUserEmail(EmailReplacementRequest emailReplacementRequest) {
+        Long currentUserId = SecurityUtil.getCurrentUser().getId();
+
+        User userFromDB = userRepository.findUserById(currentUserId)
+                        .orElseThrow(() -> new UserNotFoundException("User with such id not found"));
+
+        userFromDB.setEmail(emailReplacementRequest.newEmail());
+
+//        userRepository.save(user); Will automatically because of @Transactional
+
+        SecurityUtil.updateSecurityContext(userFromDB);
+
+        return userMapper.toUserResponse(userFromDB);
     }
 
     @Override
-    public Boolean changeUserPassword(Long userId, PasswordReplacementRequest passwordReplacementRequest) {
+    public Boolean changeUserPassword(PasswordReplacementRequest passwordReplacementRequest) {
         User currentUser = SecurityUtil.getCurrentUser();
 
-        if(currentUser.getId().equals(userId))
-            throw new AccessDeniedException("Cannot change another user's password");
-
-        if(passwordEncoder.matches(passwordReplacementRequest.oldPassword(), currentUser.getPassword()))
+        if(!passwordEncoder.matches(passwordReplacementRequest.oldPassword(), currentUser.getPassword()))
             throw new BadCredentialsException("Incorrect current password");
 
+        User userFromDB = userRepository.findUserById(currentUser.getId())
+                .orElseThrow(() -> new UserNotFoundException("User with such id not found"));
+
         String encodedNewPassword = passwordEncoder.encode(passwordReplacementRequest.newPassword());
-        userRepository.changeUserPasswordByUserId(userId, encodedNewPassword);
+        userFromDB.setPassword(encodedNewPassword);
+
+//        userRepository.save(currentUser); Will automatically because of @Transactional
+
+        SecurityUtil.updateSecurityContext(userFromDB);
 
         return true;
     }
