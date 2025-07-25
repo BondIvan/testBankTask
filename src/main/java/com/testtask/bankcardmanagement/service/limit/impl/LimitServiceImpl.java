@@ -7,6 +7,7 @@ import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
+import com.testtask.bankcardmanagement.repository.LimitRepository;
 import com.testtask.bankcardmanagement.repository.TransactionRepository;
 import com.testtask.bankcardmanagement.service.limit.LimitService;
 import com.testtask.bankcardmanagement.service.transaction.impl.TransactionSpecification;
@@ -14,16 +15,19 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class LimitServiceImpl implements LimitService {
     private final TransactionRepository transactionRepository;
+    private final LimitRepository limitRepository;
 
     @Override
     public void checkCardLimits(Card card, BigDecimal amount) {
@@ -31,9 +35,6 @@ public class LimitServiceImpl implements LimitService {
         List<Limit> limits = card.getLimits();
 
         for(Limit limit: limits) {
-            if (limit.getLimitType() == LimitType.NO_LIMIT)
-                continue;
-
             switch (limit.getLimitType()) {
                 case DAILY -> {
                     BigDecimal sumForADay = getAllTransactionsByUserCardForADay(card.getId()).stream()
@@ -66,6 +67,25 @@ public class LimitServiceImpl implements LimitService {
                 }
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public Limit setCardLimit(Card card, LimitType limitType, BigDecimal maxAmount) {
+        Optional<Limit> existingLimitByCardOptional = limitRepository.findLimitByCardIdAndLimitType(card.getId(), limitType);
+
+        Limit changingLimit;
+        if(existingLimitByCardOptional.isPresent()) {
+            changingLimit = existingLimitByCardOptional.get();
+            changingLimit.setMaxAmount(maxAmount);
+        } else {
+            changingLimit = new Limit();
+            changingLimit.setLimitType(limitType);
+            changingLimit.setCard(card);
+            changingLimit.setMaxAmount(maxAmount);
+        }
+
+        return limitRepository.save(changingLimit);
     }
 
     private List<Transaction> getAllTransactionsByUserCardForADay(Long cardId) {

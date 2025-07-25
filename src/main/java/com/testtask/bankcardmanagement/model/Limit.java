@@ -22,12 +22,12 @@ public class Limit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id", nullable = false)
     private Card card;
 
     @Column(name = "limit_type")
-    @Convert(converter = LimitTypeConverter.class)
+    @Convert(converter = LimitTypeConverter.class)   //TODO Сделать ограничение-уникальность в базе данных на поля card_id и limit_type
     private LimitType limitType;
 
     @Column(name = "max_amount", precision = 15, scale = 2)

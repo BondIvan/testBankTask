@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,10 +46,10 @@ public class Card {
     private BigDecimal balance;
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Transaction> transactionList;
+    private List<Transaction> transactionList = new ArrayList<>();
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Limit> limits;
+    private List<Limit> limits = new ArrayList<>();
 
     @Override
     public String toString() {
@@ -61,12 +62,12 @@ public class Card {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Card card = (Card) o;
-        return Objects.equals(encryptedNumber, card.encryptedNumber)
+        return Objects.equals(cardHash, card.cardHash)
                 && Objects.equals(expirationDate, card.expirationDate);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(encryptedNumber, expirationDate);
+    public int hashCode() { //TODO Заменить encryptedNumber на cardHash
+        return Objects.hash(cardHash, expirationDate);
     }
 }

@@ -1,6 +1,7 @@
 package com.testtask.bankcardmanagement.service.card.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
+import com.testtask.bankcardmanagement.encrypt.hash.HashCardNumber;
 import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
 import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
 import com.testtask.bankcardmanagement.exception.card.CardNotAvailableException;
@@ -11,28 +12,32 @@ import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
-import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
-import com.testtask.bankcardmanagement.model.dto.limit.LimitRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
-import com.testtask.bankcardmanagement.model.enums.LimitType;
+import com.testtask.bankcardmanagement.model.enums.UserRole;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.model.mapper.LimitMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
+import com.testtask.bankcardmanagement.service.limit.LimitService;
 import com.testtask.bankcardmanagement.service.security.SecurityUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,43 +46,33 @@ public class CardServiceImpl implements CardService {
     private final AESEncryption aesEncryption;
     private final UserRepository userRepository;
     private final CardMapper cardMapper;
-    private final LimitMapper limitMapper;
+    private final HashCardNumber hashCardNumber;
+    private final LimitService limitService;
 
     @Override
-    public CardResponse createCard(CardRequest cardRequest) {
-        Optional<User> optionalUser = userRepository.findUserByEmail(cardRequest.ownerEmail());
-        if(optionalUser.isEmpty())
+    @Transactional
+    public CardResponse createCard(CreateCardRequest request) {
+        Optional<User> optionalOwner = userRepository.findUserByEmail(request.ownerEmail());
+        if(optionalOwner.isEmpty())
             throw new UserNotFoundException("User with such email not found.");
 
-        User owner = optionalUser.get();
+        User owner = optionalOwner.get();
 
-        if(isCardNumberDuplicate(owner, cardRequest.cardNumber()))
+        String hashForNewCard = hashCardNumber.hash(request.cardNumber());
+        if(doesUserHaveCardWithThisNumber(owner.getId(), hashForNewCard))
             throw new CardDuplicateException("A card with this number already exists.");
-
-        List<LimitRequest> limitRequestList = cardRequest.limits();
-        if(limitRequestList == null || limitRequestList.isEmpty())
-            limitRequestList = List.of(new LimitRequest(LimitType.NO_LIMIT, null));
 
         Card card = new Card();
         card.setUser(owner);
-        card.setEncryptedNumber(aesEncryption.encrypt(cardRequest.cardNumber()));
-        card.setExpirationDate(cardRequest.expirationDate());
+        card.setExpirationDate(request.expirationDate());
         card.setStatus(CardStatus.ACTIVE);
+        card.setEncryptedNumber(aesEncryption.encrypt(request.cardNumber()));
+        card.setCardHash(hashForNewCard);
         card.setBalance(BigDecimal.ZERO);
 
         Card savedCard = cardRepository.save(card);
 
-        List<Limit> limits = limitRequestList.stream()
-                .map(limitRequest -> {
-                    Limit limit = limitMapper.toLimit(limitRequest);
-                    limit.setCard(savedCard);
-                    return limit;
-                })
-                .collect(Collectors.toList());
-
-        savedCard.setLimits(limits);
-        Card savedWithLimits = cardRepository.save(savedCard);
-        return cardMapper.toCardResponse(savedWithLimits);
+        return cardMapper.toCardResponse(savedCard);
     }
 
     @Override
@@ -120,43 +115,30 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public CardResponse blockCard(Long id) {
-        Optional<Card> optionalCard = cardRepository.findById(id);
-        if(optionalCard.isEmpty())
-            throw new CardNotFoundException("A card with such id not found.");
-
-        Card card = optionalCard.get();
-        card.setStatus(CardStatus.BLOCKED);
-
-        Card updatedCard = cardRepository.save(card);
-        return cardMapper.toCardResponse(updatedCard);
+        return null;
     }
 
     @Override
     public CardResponse activateCard(Long id) {
-        Optional<Card> optionalCard = cardRepository.findById(id);
-        if(optionalCard.isEmpty())
-            throw new CardNotFoundException("A card with such id not found.");
-
-        Card card = optionalCard.get();
-        card.setStatus(CardStatus.ACTIVE);
-
-        Card updatedCard = cardRepository.save(card);
-        return cardMapper.toCardResponse(updatedCard);
+        return null;
     }
 
     @Override
-    public void deleteCard(Long id) {
-        Optional<Card> optionalCard = cardRepository.findById(id);
-        if(optionalCard.isEmpty())
-            throw new CardNotFoundException("A card with such id not found.");
+    @Transactional
+    public boolean deleteCardById(Long cardId) {
+        User currentUser = SecurityUtil.getCurrentUser();
+        if(currentUser.getRole() != UserRole.ADMIN)
+            throw new AccessDeniedException("Only admin can delete card");
 
-        Card card = optionalCard.get();
-        boolean isCardBalanceZero = card.getBalance().signum() == 0;
+        Card card = cardRepository.findCardById(cardId)
+                        .orElseThrow(() -> new CardNotFoundException("A card with such id not found."));
 
-        if(!isCardBalanceZero)
+        if(card.getBalance().signum() != 0)
             throw new CardBalanceException("Cannot delete a card with a non-zero amount.");
 
         cardRepository.delete(card);
+
+        return true;
     }
 
     @Override
@@ -181,29 +163,19 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
+    @Transactional
     public CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest) {
-        Optional<Card> optionalCard = cardRepository.findById(cardId);
+        User currentUser = SecurityUtil.getCurrentUser();
 
-        if(optionalCard.isEmpty())
-            throw new CardNotFoundException("The card with such id not found.");
+        Card card = cardRepository.findCardByUserIdAndCardId(currentUser.getId(), cardId)
+                .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));
 
-        Card card = optionalCard.get();
+        limitService.setCardLimit(card, limitUpdateRequest.type(), limitUpdateRequest.maxAmount());
 
-        List<Limit> newLimits = limitUpdateRequest.limits().stream()
-                .map(limitRequest -> {
-                    Limit limit = limitMapper.toLimit(limitRequest);
-                    limit.setCard(card);
-                    return limit;
-                })
-                .collect(Collectors.toList());
+        Card cardWithLimits = cardRepository.findCardWithLimitsByCardId(cardId)
+                .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));
 
-        List<Limit> oldLimit = card.getLimits();
-        oldLimit.clear();
-        oldLimit.addAll(newLimits);
-
-        card.setLimits(oldLimit);
-        Card savedCard = cardRepository.save(card);
-        return cardMapper.toCardResponse(savedCard);
+        return cardMapper.toCardResponse(cardWithLimits);
     }
 
     @Override
@@ -228,10 +200,7 @@ public class CardServiceImpl implements CardService {
                 .toList();
     }
 
-    private boolean isCardNumberDuplicate(User user, String cardNumber) {
-        List<String> userCards = cardRepository.findEncryptedNumberByUserId(user.getId());
-        return userCards.stream()
-                .map(aesEncryption::decrypt)
-                .anyMatch(number -> number.equals(cardNumber));
+    private boolean doesUserHaveCardWithThisNumber(Long userId, String hashNewNumber) {
+        return cardRepository.existByUserAndHashNumber(userId, hashNewNumber);
     }
 }

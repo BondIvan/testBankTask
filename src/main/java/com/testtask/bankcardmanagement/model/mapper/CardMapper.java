@@ -4,7 +4,7 @@ import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
-import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
+import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,12 +18,12 @@ public class CardMapper {
     private final LimitMapper limitMapper;
 
     public CardResponse toCardResponse(Card card) {
-        UserResponse userResponse = userMapper.toUserResponse(card.getUser());
+        CommonUserResponse commonUserResponse = userMapper.toUserResponse(card.getUser());
         List<LimitResponse> limitResponse = limitMapper.toListLimitResponse(card.getLimits());
         return new CardResponse(
                 maskCardNumber(card.getEncryptedNumber()),
                 card.getExpirationDate(),
-                userResponse,
+                commonUserResponse,
                 card.getStatus(),
                 card.getBalance(),
                 limitResponse
@@ -34,5 +34,4 @@ public class CardMapper {
         String decryptedNumber = aesEncryption.decrypt(encryptedNumber);
         return "**** **** **** " + decryptedNumber.substring(12);
     }
-
 }

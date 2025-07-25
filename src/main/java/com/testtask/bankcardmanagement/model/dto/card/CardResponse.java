@@ -1,7 +1,7 @@
 package com.testtask.bankcardmanagement.model.dto.card;
 
 import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
-import com.testtask.bankcardmanagement.model.dto.user.UserResponse;
+import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 
 import java.math.BigDecimal;
@@ -13,7 +13,7 @@ public record CardResponse(
 
         LocalDate expirationDate,
 
-        UserResponse userResponse,
+        CommonUserResponse commonUserResponse,
 
         CardStatus status,
 

@@ -3,7 +3,7 @@ package com.testtask.bankcardmanagement.controller;
 import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
+import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
@@ -39,23 +39,30 @@ public class UserController {
 
     private final TransactionService transactionService;
     private final CardService cardService;
-    private final UserProfileServiceImpl userProfileServiceImpl;
 
-    @PostMapping("/update-email/{userId}")
+    @PostMapping("/update-email")
     public ResponseEntity<CommonUserResponse> updateUserEmail(
-            @PathVariable("userId") Long userId,
             @RequestBody @Valid EmailReplacementRequest emailReplacementRequest
     ) {
-        return ResponseEntity.ok(userProfileServiceImpl.changeUserEmail(userId, emailReplacementRequest));
+//        return ResponseEntity.ok(userProfileServiceImpl.changeUserEmail(emailReplacementRequest));
+        return null;
     }
 
-    @PostMapping("/update-password/{userId}")
+    @PostMapping("/update-password") //TODO Добавить rate limiting на этот эндпоинт
     public ResponseEntity<String> updatePassword(
-            @PathVariable("userId") Long userId,
             @RequestBody @Valid PasswordReplacementRequest passwordReplacementRequest
     ) {
-        userProfileServiceImpl.changeUserPassword(userId, passwordReplacementRequest);
-        return ResponseEntity.ok("The password was successfully updated");
+//        userProfileServiceImpl.changeUserPassword(passwordReplacementRequest);
+//        return ResponseEntity.ok("The password was successfully updated");
+        return null;
+    }
+
+    @PostMapping("/card/{cardId}/update-limit")
+    public ResponseEntity<CardResponse> updateCardLimit(
+            @PathVariable("cardId") Long cardId,
+            @RequestBody @Valid LimitUpdateRequest limitUpdateRequest) {
+
+        return ResponseEntity.ok(cardService.updateCardLimit(cardId, limitUpdateRequest));
     }
 
     @GetMapping("/get-all-cards")
@@ -66,7 +73,8 @@ public class UserController {
     )
     {
         return ResponseEntity.ok(
-                cardService.getAllCardsForCurrentUser(cardParamFilter, page, size)
+                null
+//                cardService.getAllCardsForCurrentUser(cardParamFilter, page, size)
         );
     }
 
@@ -76,11 +84,11 @@ public class UserController {
         return null;
     }
 
-    @PostMapping("/request-active-card")
-    public ResponseEntity<String> requestToActivateUserCard(@RequestBody @Valid ActivateRequest activateRequest) {
-        //TODO Finish if off
-        return null;
-    }
+//    @PostMapping("/request-active-card")
+//    public ResponseEntity<String> requestToActivateUserCard(@RequestBody @Valid ActivateRequest activateRequest) {
+//        //TODO Finish if off
+//        return null;
+//    }
 
     @GetMapping("/get-transactions-by-user-card/{cardId}")
     public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
@@ -96,21 +104,24 @@ public class UserController {
     ) {
         validateSortFields(sortList);
         return ResponseEntity.ok(
-                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size,
-                        type, from, to, sortList, sortOrder)
+                null
+//                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size,
+//                        type, from, to, sortList, sortOrder)
         );
     }
 
     @PostMapping("/write-off")
     public ResponseEntity<TransactionResponse> writeOff(@RequestBody @Valid TransactionWriteOffRequest transactionWriteOffRequest) {
-        TransactionResponse transactionResponse = transactionService.writeOff(transactionWriteOffRequest);
-        return ResponseEntity.ok(transactionResponse);
+//        TransactionResponse transactionResponse = transactionService.writeOff(transactionWriteOffRequest);
+//        return ResponseEntity.ok(transactionResponse);
+        return null;
     }
 
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponse> transfer(@RequestBody @Valid TransactionTransferRequest transactionTransferRequest) {
-        TransactionResponse transactionResponse = transactionService.transfer(transactionTransferRequest);
-        return ResponseEntity.ok(transactionResponse);
+//        TransactionResponse transactionResponse = transactionService.transfer(transactionTransferRequest);
+//        return ResponseEntity.ok(transactionResponse);
+        return null;
     }
 
     private void validateSortFields(List<String> sortList) {
