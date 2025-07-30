@@ -14,6 +14,9 @@ import com.testtask.bankcardmanagement.service.user.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -81,16 +84,18 @@ public class AdminController {
     }
 
     @GetMapping("/get-all-cards")
-    public ResponseEntity<Page<CardResponse>> getAllCards(
+    public ResponseEntity<PagedModel<EntityModel<CardResponse>>> getAllCards(
             @Valid CardParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") List<String> sortList,
-            @RequestParam(defaultValue = "ASC") String sortOrder
+            @RequestParam(defaultValue = "ASC") String sortOrder,
+            PagedResourcesAssembler<CardResponse> assembler
     )
     {
         validateCardSortFields(sortList);
-        return ResponseEntity.ok(cardService.getAllCards(filter, page, size, sortList, sortOrder));
+        Page<CardResponse> cardPage = cardService.getAllCards(filter, page, size, sortList, sortOrder);
+        return ResponseEntity.ok(assembler.toModel(cardPage));
     }
 
     @GetMapping("/get-transactions-by-card/{cardId}")
