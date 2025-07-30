@@ -2,6 +2,10 @@ package com.testtask.bankcardmanagement.repository;
 
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -28,6 +32,10 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
 
     @Query(value = "SELECT c FROM Card c LEFT JOIN FETCH c.limits WHERE c.id = :cardId")
     Optional<Card> findCardWithLimitsByCardId(@Param("cardId") Long cardId);
+
+    @Override
+    @EntityGraph(attributePaths = "user")
+    Page<Card> findAll(Specification<Card> spec, Pageable pageable);
 
     @Query("SELECT c.encryptedNumber FROM Card c WHERE c.user.id = :ownerId")
     List<String> findEncryptedNumberByUserId(@Param("ownerId") Long ownerId);

@@ -13,7 +13,6 @@ import java.util.List;
 
 public interface CardService {
     boolean validateCardOwnership(Long cardId);
-    Page<CardResponse> getAllCards(CardParamFilter cardParamFilter, int page, int size, List<String> sortList, String sortOrder);
     Page<CardResponse> getAllCardsForCurrentUser(CardParamFilter cardParamFilter, int page, int size);
     CardResponse blockCard(Long id);
     CardResponse activateCard(Long id);
@@ -23,8 +22,7 @@ public interface CardService {
 
     CardResponse createCard(CreateCardRequest createCardRequest);
     boolean deleteCardById(Long cardId);
-//    Page<CardResponse> getAllCards(int page, int size, CardStatus cardStatus,
-//                                   Long userId, Set<String> sortList, List<String> sortOrder);
+    Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder);
 //    Page<CardResponse> getAllCardsByUser(Long userId, int page, int size);
 //    BlockCardResponse blockCard(Long cardId);
 //    ActivateCardResponse activateCard(Long cardId);

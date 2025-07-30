@@ -9,7 +9,6 @@ import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
 import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
-import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
@@ -18,7 +17,6 @@ import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.model.enums.UserRole;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
-import com.testtask.bankcardmanagement.model.mapper.LimitMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
@@ -76,10 +74,10 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public Page<CardResponse> getAllCards(CardParamFilter cardParamFilter, int page, int size, List<String> sortList, String sortOrder) {
+    public Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
         List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
-        Specification<Card> cardSpec = CardSpecification.build(cardParamFilter);
+        Specification<Card> cardSpec = CardSpecification.build(filter);
 
         List<CardResponse> foundCards = cardRepository.findAll(cardSpec, pageable).stream()
                 .map(cardMapper::toCardResponse)

@@ -3,14 +3,12 @@ package com.testtask.bankcardmanagement.controller;
 import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
-import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
-import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
+import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
-import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.service.card.CardService;
-import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import com.testtask.bankcardmanagement.service.user.AdminService;
 import jakarta.validation.Valid;
@@ -64,37 +62,35 @@ public class AdminController {
 
     @PutMapping("/block-card/{cardId}")
     public ResponseEntity<CardResponse> blockingCard(@PathVariable("cardId") Long id) {
-        CardResponse cardResponse = cardService.blockCard(id);
-        return ResponseEntity.ok(cardResponse);
+//        CardResponse cardResponse = cardService.blockCard(id);
+//        return ResponseEntity.ok(cardResponse);
+        return null;
     }
 
     @PutMapping("/activate-card/{cardId}")
     public ResponseEntity<CardResponse> activatingCard(@PathVariable("cardId") Long id) {
-        CardResponse cardResponse = cardService.activateCard(id);
-        return ResponseEntity.ok(cardResponse);
+//        CardResponse cardResponse = cardService.activateCard(id);
+//        return ResponseEntity.ok(cardResponse);
+        return null;
     }
 
     @DeleteMapping("/delete-card/{cardId}")
-    public ResponseEntity<String> deleteCard(@PathVariable("cardId") Long id) {
-        cardService.deleteCard(id);
+    public ResponseEntity<String> deleteCard(@PathVariable("cardId") Long cardId) {
+        cardService.deleteCardById(cardId);
         return ResponseEntity.ok("The card was successfully deleted");
     }
 
     @GetMapping("/get-all-cards")
     public ResponseEntity<Page<CardResponse>> getAllCards(
-//            @RequestBody() @Valid CardParamFilter paramFilter,
+            @Valid CardParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "null") CardStatus cardStatus,
-            @RequestParam(defaultValue = "null") Long userId,
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     )
     {
         validateCardSortFields(sortList);
-        return ResponseEntity.ok(
-                cardService.getAllCards(paramFilter, page, size, cardStatus, userId, sortList, sortOrder)
-        );
+        return ResponseEntity.ok(cardService.getAllCards(filter, page, size, sortList, sortOrder));
     }
 
     @GetMapping("/get-transactions-by-card/{cardId}")
@@ -111,16 +107,9 @@ public class AdminController {
     ) {
         validateTransactionSortFields(sortList);
         return ResponseEntity.ok(
-                transactionService.getTransactionsByCard(cardId, transactionParamFilter, type, from, to, page, size, sortList, sortOrder)
+                null
+//                transactionService.getTransactionsByCard(cardId, transactionParamFilter, type, from, to, page, size, sortList, sortOrder)
         );
-    }
-
-    //TODO Это должно быть у пользователя
-    @PutMapping("/update-limits/{cardId}")
-    public ResponseEntity<CardResponse> setDayCardLimit(@PathVariable("cardId") Long cardId,
-                                                        @RequestBody @Valid LimitUpdateRequest limitUpdateRequest) {
-        CardResponse cardResponse = cardService.updateCardLimit(cardId, limitUpdateRequest);
-        return ResponseEntity.ok(cardResponse);
     }
 
     private void validateTransactionSortFields(List<String> sortList) {

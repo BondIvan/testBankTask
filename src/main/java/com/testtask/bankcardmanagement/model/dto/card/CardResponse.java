@@ -13,7 +13,7 @@ public record CardResponse(
 
         LocalDate expirationDate,
 
-        CommonUserResponse commonUserResponse,
+        CommonUserResponse owner,
 
         CardStatus status,
 
