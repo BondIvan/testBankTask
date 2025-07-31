@@ -21,7 +21,7 @@ import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.limit.LimitService;
-import com.testtask.bankcardmanagement.service.security.SecurityUtil;
+import com.testtask.bankcardmanagement.service.security.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -46,6 +46,7 @@ public class CardServiceImpl implements CardService {
     private final CardMapper cardMapper;
     private final HashCardNumber hashCardNumber;
     private final LimitService limitService;
+    private final SecurityService securityService;
 
     @Override
     @Transactional
@@ -91,7 +92,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public Page<CardResponse> getAllCardsForCurrentUser(CardParamFilter cardParamFilter, int page, int size) {
-        User user = SecurityUtil.getCurrentUser();
+        User user = securityService.getCurrentUser();
         CardParamFilter userFilter = new CardParamFilter(
                 cardParamFilter.status(),
                 user.getEmail()
@@ -124,7 +125,7 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public boolean deleteCardById(Long cardId) {
-        User currentUser = SecurityUtil.getCurrentUser();
+        User currentUser = securityService.getCurrentUser();
         if(currentUser.getRole() != UserRole.ADMIN)
             throw new AccessDeniedException("Only admin can delete card");
 
@@ -141,7 +142,7 @@ public class CardServiceImpl implements CardService {
 
     @Override
     public boolean validateCardOwnership(Long id) {
-        User user = SecurityUtil.getCurrentUser();
+        User user = securityService.getCurrentUser();
         boolean isCardOwner = cardRepository.existsByIdAndUserId(id, user.getId());
         if(!isCardOwner)
             throw new AccessDeniedException("Card does not belong to the user.");
@@ -163,7 +164,7 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest) {
-        User currentUser = SecurityUtil.getCurrentUser();
+        User currentUser = securityService.getCurrentUser();
 
         Card card = cardRepository.findCardByUserIdAndCardId(currentUser.getId(), cardId)
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));

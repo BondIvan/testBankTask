@@ -10,6 +10,7 @@ import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.repository.LimitRepository;
 import com.testtask.bankcardmanagement.repository.TransactionRepository;
 import com.testtask.bankcardmanagement.service.limit.LimitService;
+import com.testtask.bankcardmanagement.service.security.SecurityService;
 import com.testtask.bankcardmanagement.service.transaction.impl.TransactionSpecification;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
@@ -28,6 +29,7 @@ import java.util.Optional;
 public class LimitServiceImpl implements LimitService {
     private final TransactionRepository transactionRepository;
     private final LimitRepository limitRepository;
+    private final SecurityService securityService;
 
     @Override
     public void checkCardLimits(Card card, BigDecimal amount) {
@@ -89,32 +91,32 @@ public class LimitServiceImpl implements LimitService {
     }
 
     private List<Transaction> getAllTransactionsByUserCardForADay(Long cardId) {
+        Long userId = securityService.getCurrentUser().getId();
         LocalDateTime startThisDay = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS);
         LocalDateTime startNextDay = startThisDay.plusDays(1);
         TransactionParamFilter filter = new TransactionParamFilter(
                 cardId,
                 TransactionType.WRITE_OFF,
                 startThisDay,
-                startNextDay,
-                true
+                startNextDay
         );
 
-        Specification<Transaction> spec = TransactionSpecification.build(filter);
+        Specification<Transaction> spec = TransactionSpecification.build(filter, userId);
         return transactionRepository.findAll(spec);
     }
 
     private List<Transaction> getAllTransactionsByUserCardForAMonth(Long cardId) {
+        Long userId = securityService.getCurrentUser().getId();
         LocalDateTime startThisMonth = LocalDateTime.now().withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
         LocalDateTime startNextMonth = startThisMonth.plusMonths(1);
         TransactionParamFilter filter = new TransactionParamFilter(
                 cardId,
                 TransactionType.WRITE_OFF,
                 startThisMonth,
-                startNextMonth,
-                true
+                startNextMonth
         );
 
-        Specification<Transaction> spec = TransactionSpecification.build(filter);
+        Specification<Transaction> spec = TransactionSpecification.build(filter, userId);
         return transactionRepository.findAll(spec);
     }
 }

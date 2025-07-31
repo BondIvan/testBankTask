@@ -11,7 +11,5 @@ public record TransactionParamFilter(
 
         LocalDateTime fromDate,
 
-        LocalDateTime toDate,
-
-        boolean checkOwnership
+        LocalDateTime toDate
 ) { }

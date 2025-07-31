@@ -1,40 +1,35 @@
 package com.testtask.bankcardmanagement.service.transaction.impl;
 
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
-import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
-import com.testtask.bankcardmanagement.exception.limit.LimitExceededException;
 import com.testtask.bankcardmanagement.exception.transaction.TransactionDeclinedException;
-import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
-import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.User;
-import com.testtask.bankcardmanagement.model.dto.card.CardRequest;
-import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
-import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.model.mapper.TransactionMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.TransactionRepository;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.limit.LimitService;
-import com.testtask.bankcardmanagement.service.security.SecurityUtil;
+import com.testtask.bankcardmanagement.service.security.SecurityService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.Hibernate;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -46,11 +41,12 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionMapper transactionMapper;
     private final CardService cardService;
     private final LimitService limitService;
+    private final SecurityService securityService;
 
     @Override
     @Transactional
     public TransactionResponse transfer(TransactionTransferRequest transactionTransferRequest) {
-        User user = SecurityUtil.getCurrentUser();
+        User user = securityService.getCurrentUser();
 
         Card senderCard = cardService.findCardByNumber(transactionTransferRequest.fromCardNumber(), user);
         Card receiverCard = cardService.findCardByNumber(transactionTransferRequest.toCardNumber(), user);
@@ -90,7 +86,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionResponse writeOff(TransactionWriteOffRequest transactionWriteOffRequest) {
-        User fromUser = SecurityUtil.getCurrentUser();
+        User fromUser = securityService.getCurrentUser();
         Card senderCard = cardService.findCardByNumber(transactionWriteOffRequest.fromCardNumber(), fromUser);
 
         if(!cardService.validateCardOwnership(senderCard.getId()))
@@ -138,15 +134,15 @@ public class TransactionServiceImpl implements TransactionService {
         if(!cardService.validateCardOwnership(cardId))
             throw new CardNotFoundException("Card does not belong to the user.");
 
+        Long userId = securityService.getCurrentUser().getId();
         TransactionParamFilter updatedFilter = new TransactionParamFilter(
                 cardId,
                 transactionParamFilter.type(),
                 transactionParamFilter.fromDate(),
-                transactionParamFilter.toDate(),
-                true
+                transactionParamFilter.toDate()
         );
 
-        return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
+        return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder, userId);
     }
 
     @Override
@@ -161,21 +157,21 @@ public class TransactionServiceImpl implements TransactionService {
                 cardId,
                 transactionParamFilter.type(),
                 transactionParamFilter.fromDate(),
-                transactionParamFilter.toDate(),
-                false
+                transactionParamFilter.toDate()
         );
 
-        return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder);
+        return getAllTransactionsByCard(updatedFilter, page, size, sortList, sortOrder, null);
     }
 
     private Page<TransactionResponse> getAllTransactionsByCard(TransactionParamFilter filter,
                                                                int page, int size,
-                                                               List<String> sortList, String sortOrder) {
+                                                               List<String> sortList, String sortOrder,
+                                                               Long userId) {
 
         List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
 
-        Specification<Transaction> spec = TransactionSpecification.build(filter);
+        Specification<Transaction> spec = TransactionSpecification.build(filter, userId);
 
         List<TransactionResponse> transactions = transactionRepository.findAll(spec, pageable).stream()
                 .map(transactionMapper::toTransactionResponse)

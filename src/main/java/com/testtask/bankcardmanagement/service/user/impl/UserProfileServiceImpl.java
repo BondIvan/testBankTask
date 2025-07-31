@@ -8,7 +8,7 @@ import com.testtask.bankcardmanagement.model.dto.user.EmailReplacementRequest;
 import com.testtask.bankcardmanagement.model.dto.user.PasswordReplacementRequest;
 import com.testtask.bankcardmanagement.model.mapper.UserMapper;
 import com.testtask.bankcardmanagement.repository.UserRepository;
-import com.testtask.bankcardmanagement.service.security.SecurityUtil;
+import com.testtask.bankcardmanagement.service.security.SecurityService;
 import com.testtask.bankcardmanagement.service.user.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,10 +22,11 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final SecurityService securityService;
 
     @Override
     public CommonUserResponse changeUserEmail(EmailReplacementRequest emailReplacementRequest) {
-        Long currentUserId = SecurityUtil.getCurrentUser().getId();
+        Long currentUserId = securityService.getCurrentUser().getId();
 
         User userFromDB = userRepository.findUserById(currentUserId)
                         .orElseThrow(() -> new UserNotFoundException("User with such id not found"));
@@ -34,14 +35,14 @@ public class UserProfileServiceImpl implements UserProfileService {
 
 //        userRepository.save(user); Will automatically because of @Transactional
 
-        SecurityUtil.updateSecurityContext(userFromDB);
+        securityService.updateSecurityContextWithNewCredentials(userFromDB);
 
-        return userMapper.toUserResponse(userFromDB);
+        return userMapper.toUserResponse(userFromDB); //TODO Return new authUserDTO with new jwt-token
     }
 
     @Override
     public Boolean changeUserPassword(PasswordReplacementRequest passwordReplacementRequest) {
-        User currentUser = SecurityUtil.getCurrentUser();
+        User currentUser = securityService.getCurrentUser();
 
         if(!passwordEncoder.matches(passwordReplacementRequest.oldPassword(), currentUser.getPassword()))
             throw new BadCredentialsException("Incorrect current password");
@@ -54,7 +55,7 @@ public class UserProfileServiceImpl implements UserProfileService {
 
 //        userRepository.save(currentUser); Will automatically because of @Transactional
 
-        SecurityUtil.updateSecurityContext(userFromDB);
+        securityService.updateSecurityContextWithNewCredentials(userFromDB); //TODO Return new authUserDTO with new jwt-token
 
         return true;
     }
