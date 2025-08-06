@@ -91,25 +91,14 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public Page<CardResponse> getAllCardsForCurrentUser(CardParamFilter cardParamFilter, int page, int size) {
-        User user = securityService.getCurrentUser();
-        CardParamFilter userFilter = new CardParamFilter(
-                cardParamFilter.status(),
-                user.getEmail()
+    public Page<CardResponse> getAllCardsByUser(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
+        String currentUserEmail = securityService.getCurrentUser().getEmail();
+        CardParamFilter filterByCurrentUser = new CardParamFilter(
+                filter.status(),
+                currentUserEmail
         );
-        // Can add new filter to cardParamFilter
-        Pageable pageable = PageRequest.of(page, size);
-        Specification<Card> cardSpec = CardSpecification.build(userFilter);
 
-        List<CardResponse> foundCards = cardRepository.findAll(cardSpec, pageable).stream()
-                .map(cardMapper::toCardResponse)
-                .toList();
-
-        return new PageImpl<>(
-                foundCards,
-                pageable,
-                foundCards.size()
-        );
+        return getAllCards(filterByCurrentUser, page, size, sortList, sortOrder);
     }
 
     @Override

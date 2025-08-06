@@ -18,6 +18,9 @@ import com.testtask.bankcardmanagement.service.user.impl.UserProfileServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,7 +38,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/v1/user/")
 public class UserController {
-    private static final Set<String> SORTABLE_FIELDS = Set.of("id", "card.status", "amount");
+    private static final Set<String> SORTABLE_CARD_FIELDS = Set.of("id", "card.status", "amount", "expirationDate");
 
     private final TransactionService transactionService;
     private final CardService cardService;
@@ -65,16 +68,18 @@ public class UserController {
     }
 
     @GetMapping("/get-all-cards")
-    public ResponseEntity<Page<CardResponse>> getAllUserCards(
-            @RequestBody @Valid CardParamFilter cardParamFilter,
+    public ResponseEntity<PagedModel<EntityModel<CardResponse>>> getAllUserCards(
+            @Valid CardParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") List<String> sortList,
+            @RequestParam(defaultValue = "ASC") String sortOrder,
+            PagedResourcesAssembler<CardResponse> assembler
     )
     {
-        return ResponseEntity.ok(
-                null
-//                cardService.getAllCardsForCurrentUser(cardParamFilter, page, size)
-        );
+        validateCardSortFields(sortList);
+        Page<CardResponse> cardPage = cardService.getAllCardsByUser(filter, page, size, sortList, sortOrder);
+        return ResponseEntity.ok(assembler.toModel(cardPage));
     }
 
     @PostMapping("/request-block-card")
@@ -101,7 +106,7 @@ public class UserController {
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {
-        validateSortFields(sortList);
+        validateCardSortFields(sortList);
         return ResponseEntity.ok(
                 null
 //                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size,
@@ -123,9 +128,9 @@ public class UserController {
         return null;
     }
 
-    private void validateSortFields(List<String> sortList) {
+    private void validateCardSortFields(List<String> sortList) {
         sortList.forEach(field -> {
-            if(!SORTABLE_FIELDS.contains(field))
+            if(!SORTABLE_CARD_FIELDS.contains(field))
                 throw new InvalidSortFieldException("Sorting by this field is not supported.");
         });
     }

@@ -5,7 +5,6 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -23,7 +22,7 @@ public class CardSpecification {
 
     public static Specification<Card> hasUserEmail(String email) {
         return (root, query, criteriaBuilder) -> (email != null) ?
-                criteriaBuilder.equal(root.join("user", JoinType.LEFT).get("email"), email) :
+                criteriaBuilder.equal(root.get("user").get("email"), email) :
                 criteriaBuilder.conjunction();
     }
 }
