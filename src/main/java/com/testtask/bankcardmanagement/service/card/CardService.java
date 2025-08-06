@@ -22,8 +22,7 @@ public interface CardService {
     CardResponse createCard(CreateCardRequest createCardRequest);
     boolean deleteCardById(Long cardId);
     Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder);
-    Page<CardResponse> getAllCardsByUser(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder);
-    CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest);
+    CardResponse updateCardLimit(Long userId, Long cardId, LimitUpdateRequest limitUpdateRequest);
 //    BlockCardResponse blockCard(Long cardId);
 //    ActivateCardResponse activateCard(Long cardId);
 //    Boolean sendBlockRequest(Long userId, Long cardId);

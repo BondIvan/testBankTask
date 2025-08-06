@@ -1,6 +1,5 @@
 package com.testtask.bankcardmanagement.controller;
 
-import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
 import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
@@ -8,9 +7,7 @@ import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
-import com.testtask.bankcardmanagement.service.card.CardService;
-import com.testtask.bankcardmanagement.service.transaction.TransactionService;
-import com.testtask.bankcardmanagement.service.user.AdminService;
+import com.testtask.bankcardmanagement.service.user.AdminActService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,23 +28,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/admin/")
 public class AdminController {
-    private static final Set<String> SORTABLE_CARD_FIELDS = Set.of("id", "user.email", "status");
-    private static final Set<String> SORTABLE_TRANSACTION_FIELDS = Set.of("id", "type", "amount");
-
-    private final CardService cardService;
-    private final TransactionService transactionService;
-    private final AdminService adminService;
+    private final AdminActService adminActService;
+    private final ValidationSortableField sortableField;
 
     @PostMapping("/create-user")
     public ResponseEntity<AuthenticationResponse> createUser(@RequestBody @Valid RegistrationRequest registrationRequest) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                adminService.createUser(registrationRequest)
+                adminActService.createUser(registrationRequest)
         );
     }
 
@@ -59,7 +51,7 @@ public class AdminController {
 
     @PostMapping("/create-card")
     public ResponseEntity<CardResponse> createCard(@RequestBody @Valid CreateCardRequest createCardRequest) {
-        CardResponse response = cardService.createCard(createCardRequest);
+        CardResponse response = adminActService.createCard(createCardRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -79,12 +71,12 @@ public class AdminController {
 
     @DeleteMapping("/delete-card/{cardId}")
     public ResponseEntity<String> deleteCard(@PathVariable("cardId") Long cardId) {
-        cardService.deleteCardById(cardId);
+        adminActService.deleteCard(cardId);
         return ResponseEntity.ok("The card was successfully deleted");
     }
 
     @GetMapping("/get-all-cards")
-    public ResponseEntity<PagedModel<EntityModel<CardResponse>>> getAllCards(
+    public ResponseEntity<PagedModel<EntityModel<CardResponse>>> getAllCards( //TODO Move to admin service
             @Valid CardParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -93,8 +85,8 @@ public class AdminController {
             PagedResourcesAssembler<CardResponse> assembler
     )
     {
-        validateCardSortFields(sortList);
-        Page<CardResponse> cardPage = cardService.getAllCards(filter, page, size, sortList, sortOrder);
+        sortableField.validAdminCardFields(sortList);
+        Page<CardResponse> cardPage = adminActService.getAllCards(filter, page, size, sortList, sortOrder);
         return ResponseEntity.ok(assembler.toModel(cardPage));
     }
 
@@ -110,25 +102,10 @@ public class AdminController {
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {
-        validateTransactionSortFields(sortList);
+        sortableField.validTransactionFields(sortList);
         return ResponseEntity.ok(
                 null
 //                transactionService.getTransactionsByCard(cardId, transactionParamFilter, type, from, to, page, size, sortList, sortOrder)
         );
     }
-
-    private void validateTransactionSortFields(List<String> sortList) {
-        sortList.forEach(field -> {
-            if(!SORTABLE_TRANSACTION_FIELDS.contains(field))
-                throw new InvalidSortFieldException("Sorting by this field is not supported.");
-        });
-    }
-
-    private void validateCardSortFields(List<String> sortList) {
-        sortList.forEach(field -> {
-            if(!SORTABLE_CARD_FIELDS.contains(field))
-                throw new InvalidSortFieldException("Sorting by this field is not supported.");
-        });
-    }
-
 }

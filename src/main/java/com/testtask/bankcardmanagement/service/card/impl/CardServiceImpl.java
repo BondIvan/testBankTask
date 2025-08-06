@@ -15,7 +15,6 @@ import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
-import com.testtask.bankcardmanagement.model.enums.UserRole;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
@@ -91,17 +90,6 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public Page<CardResponse> getAllCardsByUser(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
-        String currentUserEmail = securityService.getCurrentUser().getEmail();
-        CardParamFilter filterByCurrentUser = new CardParamFilter(
-                filter.status(),
-                currentUserEmail
-        );
-
-        return getAllCards(filterByCurrentUser, page, size, sortList, sortOrder);
-    }
-
-    @Override
     public CardResponse blockCard(Long id) {
         return null;
     }
@@ -114,10 +102,6 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public boolean deleteCardById(Long cardId) {
-        User currentUser = securityService.getCurrentUser();
-        if(currentUser.getRole() != UserRole.ADMIN)
-            throw new AccessDeniedException("Only admin can delete card");
-
         Card card = cardRepository.findCardById(cardId)
                         .orElseThrow(() -> new CardNotFoundException("A card with such id not found."));
 
@@ -152,10 +136,8 @@ public class CardServiceImpl implements CardService {
 
     @Override
     @Transactional
-    public CardResponse updateCardLimit(Long cardId, LimitUpdateRequest limitUpdateRequest) {
-        User currentUser = securityService.getCurrentUser();
-
-        Card card = cardRepository.findCardByUserIdAndCardId(currentUser.getId(), cardId)
+    public CardResponse updateCardLimit(Long userId, Long cardId, LimitUpdateRequest limitUpdateRequest) {
+        Card card = cardRepository.findCardByUserIdAndCardId(userId, cardId)
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));
 
         limitService.setCardLimit(card, limitUpdateRequest.type(), limitUpdateRequest.maxAmount());

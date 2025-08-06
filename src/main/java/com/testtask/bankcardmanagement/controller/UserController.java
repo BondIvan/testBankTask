@@ -1,6 +1,5 @@
 package com.testtask.bankcardmanagement.controller;
 
-import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
@@ -12,9 +11,8 @@ import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
 import com.testtask.bankcardmanagement.model.dto.user.EmailReplacementRequest;
 import com.testtask.bankcardmanagement.model.dto.user.PasswordReplacementRequest;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
-import com.testtask.bankcardmanagement.service.card.CardService;
-import com.testtask.bankcardmanagement.service.transaction.TransactionService;
-import com.testtask.bankcardmanagement.service.user.impl.UserProfileServiceImpl;
+import com.testtask.bankcardmanagement.service.user.UserActService;
+import com.testtask.bankcardmanagement.service.user.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,30 +30,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/user/")
 public class UserController {
-    private static final Set<String> SORTABLE_CARD_FIELDS = Set.of("id", "card.status", "amount", "expirationDate");
-
-    private final TransactionService transactionService;
-    private final CardService cardService;
-    private final UserProfileServiceImpl userProfileServiceImpl;
+    private final UserProfileService userProfileService;
+    private final UserActService userActService;
+    private final ValidationSortableField sortableField;
 
     @PostMapping("/update-email")
     public ResponseEntity<CommonUserResponse> updateUserEmail(
             @RequestBody @Valid EmailReplacementRequest emailReplacementRequest
     ) {
-        return ResponseEntity.ok(userProfileServiceImpl.changeUserEmail(emailReplacementRequest));
+        return ResponseEntity.ok(userProfileService.changeUserEmail(emailReplacementRequest));
     }
 
     @PostMapping("/update-password") //TODO Добавить rate limiting на этот эндпоинт
     public ResponseEntity<String> updatePassword(
             @RequestBody @Valid PasswordReplacementRequest passwordReplacementRequest
     ) {
-        userProfileServiceImpl.changeUserPassword(passwordReplacementRequest);
+        userProfileService.changeUserPassword(passwordReplacementRequest);
         return ResponseEntity.ok("The password was successfully updated");
     }
 
@@ -64,7 +59,7 @@ public class UserController {
             @PathVariable("cardId") Long cardId,
             @RequestBody @Valid LimitUpdateRequest limitUpdateRequest) {
 
-        return ResponseEntity.ok(cardService.updateCardLimit(cardId, limitUpdateRequest));
+        return ResponseEntity.ok(userActService.updateCardLimit(cardId, limitUpdateRequest));
     }
 
     @GetMapping("/get-all-cards")
@@ -77,8 +72,8 @@ public class UserController {
             PagedResourcesAssembler<CardResponse> assembler
     )
     {
-        validateCardSortFields(sortList);
-        Page<CardResponse> cardPage = cardService.getAllCardsByUser(filter, page, size, sortList, sortOrder);
+        sortableField.validCardFields(sortList);
+        Page<CardResponse> cardPage = userActService.getAllCards(filter, page, size, sortList, sortOrder);
         return ResponseEntity.ok(assembler.toModel(cardPage));
     }
 
@@ -106,7 +101,7 @@ public class UserController {
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {
-        validateCardSortFields(sortList);
+        sortableField.validTransactionFields(sortList);
         return ResponseEntity.ok(
                 null
 //                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size,
@@ -127,12 +122,4 @@ public class UserController {
 //        return ResponseEntity.ok(transactionResponse);
         return null;
     }
-
-    private void validateCardSortFields(List<String> sortList) {
-        sortList.forEach(field -> {
-            if(!SORTABLE_CARD_FIELDS.contains(field))
-                throw new InvalidSortFieldException("Sorting by this field is not supported.");
-        });
-    }
-
 }
