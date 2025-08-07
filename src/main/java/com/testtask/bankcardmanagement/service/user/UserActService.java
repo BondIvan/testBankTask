@@ -4,6 +4,7 @@ import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
+import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.security.SecurityService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class UserActService {
     private final SecurityService securityService;
 
     public Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
-        User currentUser = securityService.getCurrentUser();
+        User currentUser = getCurrentUser();
 
         CardParamFilter filterByCurrentUser = new CardParamFilter(
                 filter.status(),
@@ -30,7 +31,16 @@ public class UserActService {
     }
 
     public CardResponse updateCardLimit(Long cardId, LimitUpdateRequest request) {
-        User currentUser = securityService.getCurrentUser();
+        User currentUser = getCurrentUser();
         return cardService.updateCardLimit(currentUser.getId(), cardId, request);
+    }
+
+    public CardResponse deleteCardLimit(Long cardId, LimitType limitType) {
+        User currentUser = getCurrentUser();
+        return cardService.removeCardLimit(currentUser.getId(), cardId, limitType);
+    }
+
+    private User getCurrentUser() {
+        return securityService.getCurrentUser();
     }
 }

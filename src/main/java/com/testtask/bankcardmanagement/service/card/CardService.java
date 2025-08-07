@@ -6,6 +6,7 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
+import com.testtask.bankcardmanagement.model.enums.LimitType;
 import org.springframework.data.domain.Page;
 import org.springframework.lang.NonNull;
 
@@ -23,9 +24,9 @@ public interface CardService {
     boolean deleteCardById(Long cardId);
     Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder);
     CardResponse updateCardLimit(Long userId, Long cardId, LimitUpdateRequest limitUpdateRequest);
+    CardResponse removeCardLimit(Long userId, Long cardId, LimitType limitType);
 //    BlockCardResponse blockCard(Long cardId);
 //    ActivateCardResponse activateCard(Long cardId);
 //    Boolean sendBlockRequest(Long userId, Long cardId);
 //    Boolean sendActiveRequest(Long userId, Long cardId);
-//    boolean deleteCardLimit(Long cardId, LimitType limitType);
 }

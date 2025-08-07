@@ -9,4 +9,5 @@ import java.math.BigDecimal;
 public interface LimitService {
     void checkCardLimits(Card card, BigDecimal amount);
     Limit setCardLimit(Card card, LimitType limitType, BigDecimal maxAmount);
+    Limit getCardLimitByLimitType(Card card, LimitType limitType);
 }

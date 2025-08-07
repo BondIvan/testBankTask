@@ -9,12 +9,14 @@ import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
 import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
+import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
+import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
@@ -142,10 +144,23 @@ public class CardServiceImpl implements CardService {
 
         limitService.setCardLimit(card, limitUpdateRequest.type(), limitUpdateRequest.maxAmount());
 
-        Card cardWithLimits = cardRepository.findCardWithLimitsByCardId(cardId)
+        Card cardWithLimits = cardRepository.findCardWithLimitsByCardId(cardId) //TODO Здесь нужно добавить userId + в репозитории
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));
 
         return cardMapper.toCardResponse(cardWithLimits);
+    }
+
+    @Override
+    @Transactional
+    public CardResponse removeCardLimit(Long userId, Long cardId, LimitType limitType) {
+        Card card = cardRepository.findCardWithLimitsByCardId(cardId) //TODO Здесь нужно добавить userId + в репозитории
+                .orElseThrow(() -> new CardNotFoundException("Unable to find user card to remove limit"));
+
+        Limit removingLimit = limitService.getCardLimitByLimitType(card, limitType);
+
+        card.getLimits().remove(removingLimit);
+
+        return cardMapper.toCardResponse(card);
     }
 
     @Override

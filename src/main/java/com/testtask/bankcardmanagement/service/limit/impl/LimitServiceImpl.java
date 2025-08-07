@@ -1,6 +1,7 @@
 package com.testtask.bankcardmanagement.service.limit.impl;
 
 import com.testtask.bankcardmanagement.exception.limit.LimitExceededException;
+import com.testtask.bankcardmanagement.exception.limit.LimitNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.Transaction;
@@ -88,6 +89,16 @@ public class LimitServiceImpl implements LimitService {
         }
 
         return limitRepository.save(changingLimit);
+    }
+
+    @Override
+    public Limit getCardLimitByLimitType(Card card, LimitType limitType) {
+        return limitRepository.findLimitByCardIdAndLimitType(card.getId(), limitType)
+                .orElseThrow(
+                        () -> new LimitNotFoundException(
+                                String.format("Cannot find %s limit for card with id: [%d]", limitType, card.getId())
+                        )
+                );
     }
 
     private List<Transaction> getAllTransactionsByUserCardForADay(Long cardId) {

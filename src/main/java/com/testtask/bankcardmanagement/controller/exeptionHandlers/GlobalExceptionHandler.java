@@ -11,6 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -65,5 +66,23 @@ public class GlobalExceptionHandler {
 
         // Not enum reason
         return ResponseEntity.badRequest().body("Malformed request: " + exception.getMessage());
+    }
+
+    // Catching enum troubles from: path variable or request param
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<String> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        // MethodArgumentTypeMismatchException contains the reason to which class the conversion failed
+        if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
+            String allowed = Arrays.toString(ex.getRequiredType().getEnumConstants());
+            String msg = String.format(
+                    "Invalid value '%s' for enum '%s'. Allowed values: %s.",
+                    ex.getValue(), ex.getRequiredType().getSimpleName(), allowed
+            );
+
+            return ResponseEntity.badRequest().body(msg);
+        }
+
+        // Not enum reason
+        return ResponseEntity.badRequest().body("Invalid parameter: " + ex.getMessage());
     }
 }

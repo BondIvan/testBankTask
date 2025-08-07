@@ -10,6 +10,7 @@ import com.testtask.bankcardmanagement.model.dto.user.BlockRequest;
 import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
 import com.testtask.bankcardmanagement.model.dto.user.EmailReplacementRequest;
 import com.testtask.bankcardmanagement.model.dto.user.PasswordReplacementRequest;
+import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.service.user.UserActService;
 import com.testtask.bankcardmanagement.service.user.UserProfileService;
@@ -20,6 +21,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,6 +62,14 @@ public class UserController {
             @RequestBody @Valid LimitUpdateRequest limitUpdateRequest) {
 
         return ResponseEntity.ok(userActService.updateCardLimit(cardId, limitUpdateRequest));
+    }
+
+    @DeleteMapping("/card/{cardId}/limit/{limitType}")
+    public ResponseEntity<CardResponse> deleteCardLimit(
+            @PathVariable("cardId") Long cardId,
+            @PathVariable("limitType") LimitType limitType
+    ) {
+        return ResponseEntity.ok(userActService.deleteCardLimit(cardId, limitType));
     }
 
     @GetMapping("/get-all-cards")
