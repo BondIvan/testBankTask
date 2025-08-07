@@ -139,13 +139,10 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public CardResponse updateCardLimit(Long userId, Long cardId, LimitUpdateRequest limitUpdateRequest) {
-        Card card = cardRepository.findCardByUserIdAndCardId(userId, cardId)
+        Card cardWithLimits = cardRepository.findCardWithLimitsByUserIdAndCardId(userId, cardId)
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));
 
-        limitService.setCardLimit(card, limitUpdateRequest.type(), limitUpdateRequest.maxAmount());
-
-        Card cardWithLimits = cardRepository.findCardWithLimitsByCardId(cardId) //TODO Здесь нужно добавить userId + в репозитории
-                .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));
+        limitService.setCardLimit(cardWithLimits, limitUpdateRequest.type(), limitUpdateRequest.maxAmount());
 
         return cardMapper.toCardResponse(cardWithLimits);
     }
@@ -153,14 +150,14 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional
     public CardResponse removeCardLimit(Long userId, Long cardId, LimitType limitType) {
-        Card card = cardRepository.findCardWithLimitsByCardId(cardId) //TODO Здесь нужно добавить userId + в репозитории
+        Card cardWithLimits = cardRepository.findCardWithLimitsByUserIdAndCardId(userId, cardId)
                 .orElseThrow(() -> new CardNotFoundException("Unable to find user card to remove limit"));
 
-        Limit removingLimit = limitService.getCardLimitByLimitType(card, limitType);
+        Limit removingLimit = limitService.getCardLimitByLimitType(cardWithLimits, limitType);
 
-        card.getLimits().remove(removingLimit);
+        cardWithLimits.getLimits().remove(removingLimit);
 
-        return cardMapper.toCardResponse(card);
+        return cardMapper.toCardResponse(cardWithLimits);
     }
 
     @Override

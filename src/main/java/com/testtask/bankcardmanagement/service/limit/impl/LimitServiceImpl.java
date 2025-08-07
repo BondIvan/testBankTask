@@ -75,30 +75,34 @@ public class LimitServiceImpl implements LimitService {
     @Override
     @Transactional
     public Limit setCardLimit(Card card, LimitType limitType, BigDecimal maxAmount) {
-        Optional<Limit> existingLimitByCardOptional = limitRepository.findLimitByCardIdAndLimitType(card.getId(), limitType);
+        Optional<Limit> existingLimit = card.getLimits().stream()
+                .filter(limit -> limit.getLimitType() == limitType)
+                .findFirst();
 
-        Limit changingLimit;
-        if(existingLimitByCardOptional.isPresent()) {
-            changingLimit = existingLimitByCardOptional.get();
-            changingLimit.setMaxAmount(maxAmount);
+        Limit newLimit;
+        if(existingLimit.isPresent()) {
+            newLimit = existingLimit.get();
+            newLimit.setMaxAmount(maxAmount);
         } else {
-            changingLimit = new Limit();
-            changingLimit.setLimitType(limitType);
-            changingLimit.setCard(card);
-            changingLimit.setMaxAmount(maxAmount);
+            newLimit = new Limit();
+            newLimit.setLimitType(limitType);
+            newLimit.setMaxAmount(maxAmount);
+            newLimit.setCard(card);
+
+            card.getLimits().add(newLimit);
         }
 
-        return limitRepository.save(changingLimit);
+        return limitRepository.save(newLimit);
     }
 
     @Override
-    public Limit getCardLimitByLimitType(Card card, LimitType limitType) {
-        return limitRepository.findLimitByCardIdAndLimitType(card.getId(), limitType)
-                .orElseThrow(
-                        () -> new LimitNotFoundException(
-                                String.format("Cannot find %s limit for card with id: [%d]", limitType, card.getId())
-                        )
-                );
+    public Limit getCardLimitByLimitType(Card cardWithLimit, LimitType limitType) {
+        return cardWithLimit.getLimits().stream()
+                .filter(limit -> limit.getLimitType() == limitType)
+                .findFirst()
+                .orElseThrow(() -> new LimitNotFoundException(
+                        String.format("Cannot find %s limit for card with id: [%d]", limitType, cardWithLimit.getId())
+                ));
     }
 
     private List<Transaction> getAllTransactionsByUserCardForADay(Long cardId) {
