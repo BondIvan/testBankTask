@@ -2,7 +2,6 @@ package com.testtask.bankcardmanagement.controller;
 
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationRequest;
 import com.testtask.bankcardmanagement.model.dto.auth.AuthenticationResponse;
-import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
 import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,15 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthenticationService authenticationService;
 
-    //TODO Это должен делать только admin, поэтому этот код в методе createUser в классе AdminController
-//    @PostMapping("/register")
-//    public ResponseEntity<AuthenticationResponse> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
-//        return ResponseEntity.ok(authenticationService.register(registrationRequest));
-//    }
-
     @PostMapping("authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest authenticationRequest) {
         return ResponseEntity.ok(authenticationService.authenticate(authenticationRequest));
     }
-
 }

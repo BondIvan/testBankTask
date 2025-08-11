@@ -10,6 +10,7 @@ import com.testtask.bankcardmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ public class AuthenticationService {
     private final AuthenticationMapper authenticationMapper;
     private final AuthenticationManager authenticationManager;
 
+    //TODO Возможно нужна проверка существуеи ли уже пользователь
     public AuthenticationResponse register(RegistrationRequest authenticationRequest) {
         User user = new User();
         user.setEmail(authenticationRequest.email());
@@ -34,18 +36,22 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest authenticationRequest) {
-        authenticationManager.authenticate(
+        Authentication authenticate = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         authenticationRequest.email(),
                         authenticationRequest.password()
                 )
         );
         // if user email and password correct
-        User user = userRepository.findUserByEmail(authenticationRequest.email())
-                .orElseThrow(() -> new UserNotFoundException("User with such email not found."));
+//        User user = userRepository.findUserByEmail(authenticationRequest.email())
+//                .orElseThrow(() -> new UserNotFoundException("User with such email not found."));
 
-        String jwtToken = jwtService.generateToken(user);
-        return authenticationMapper.toAuthenticationResponse(jwtToken);
+        if(authenticate.getPrincipal() instanceof User user) {
+            String jwtToken = jwtService.generateToken(user);
+            return authenticationMapper.toAuthenticationResponse(jwtToken);
+        } else {
+            throw new RuntimeException("Some error with authentication");
+        }
     }
 
 }
