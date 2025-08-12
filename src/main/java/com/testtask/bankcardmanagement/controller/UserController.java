@@ -2,6 +2,7 @@ package com.testtask.bankcardmanagement.controller;
 
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
@@ -57,7 +58,7 @@ public class UserController {
     }
 
     @PostMapping("/card/{cardId}/update-limit")
-    public ResponseEntity<CardResponse> updateCardLimit(
+    public ResponseEntity<List<LimitResponse>> updateCardLimit(
             @PathVariable("cardId") Long cardId,
             @RequestBody @Valid LimitUpdateRequest limitUpdateRequest) {
 
@@ -65,7 +66,7 @@ public class UserController {
     }
 
     @DeleteMapping("/card/{cardId}/limit/{limitType}")
-    public ResponseEntity<CardResponse> deleteCardLimit(
+    public ResponseEntity<List<LimitResponse>> deleteCardLimit(
             @PathVariable("cardId") Long cardId,
             @PathVariable("limitType") LimitType limitType
     ) {
@@ -121,14 +122,14 @@ public class UserController {
 
     @PostMapping("/write-off")
     public ResponseEntity<TransactionResponse> writeOff(@RequestBody @Valid TransactionWriteOffRequest transactionWriteOffRequest) {
-//        TransactionResponse transactionResponse = transactionService.writeOff(transactionWriteOffRequest);
+//        TransactionResponse transactionResponse = transactionOperationService.writeOff(transactionWriteOffRequest);
 //        return ResponseEntity.ok(transactionResponse);
         return null;
     }
 
     @PostMapping("/transfer")
     public ResponseEntity<TransactionResponse> transfer(@RequestBody @Valid TransactionTransferRequest transactionTransferRequest) {
-//        TransactionResponse transactionResponse = transactionService.transfer(transactionTransferRequest);
+//        TransactionResponse transactionResponse = transactionOperationService.transfer(transactionTransferRequest);
 //        return ResponseEntity.ok(transactionResponse);
         return null;
     }

@@ -3,9 +3,11 @@ package com.testtask.bankcardmanagement.service.user;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
+import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.service.card.CardService;
+import com.testtask.bankcardmanagement.service.limit.LimitService;
 import com.testtask.bankcardmanagement.service.security.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +20,7 @@ import java.util.List;
 public class UserActService {
     private final CardService cardService;
     private final SecurityService securityService;
+    private final LimitService limitService;
 
     public Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
         User currentUser = getCurrentUser();
@@ -30,14 +33,14 @@ public class UserActService {
         return cardService.getAllCards(filterByCurrentUser, page, size, sortList, sortOrder);
     }
 
-    public CardResponse updateCardLimit(Long cardId, LimitUpdateRequest request) {
+    public List<LimitResponse> updateCardLimit(Long cardId, LimitUpdateRequest request) {
         User currentUser = getCurrentUser();
-        return cardService.updateCardLimit(currentUser.getId(), cardId, request);
+        return limitService.updateCardLimit(currentUser.getId(), cardId, request);
     }
 
-    public CardResponse deleteCardLimit(Long cardId, LimitType limitType) {
+    public List<LimitResponse> deleteCardLimit(Long cardId, LimitType limitType) {
         User currentUser = getCurrentUser();
-        return cardService.removeCardLimit(currentUser.getId(), cardId, limitType);
+        return limitService.removeCardLimit(currentUser.getId(), cardId, limitType);
     }
 
     private User getCurrentUser() {

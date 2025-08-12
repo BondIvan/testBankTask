@@ -1,4 +1,4 @@
-package com.testtask.bankcardmanagement.service.transaction.impl;
+package com.testtask.bankcardmanagement.service.transaction;
 
 import com.testtask.bankcardmanagement.model.Transaction;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;

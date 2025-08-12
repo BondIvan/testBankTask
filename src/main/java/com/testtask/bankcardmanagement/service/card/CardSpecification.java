@@ -1,4 +1,4 @@
-package com.testtask.bankcardmanagement.service.card.impl;
+package com.testtask.bankcardmanagement.service.card;
 
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
