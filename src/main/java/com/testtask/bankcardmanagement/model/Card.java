@@ -46,8 +46,11 @@ public class Card {
     @Column(name = "balance", nullable = false, precision = 15, scale = 2)
     private BigDecimal balance;
 
-    @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Transaction> transactionList = new ArrayList<>();
+    @OneToMany(mappedBy = "targetCard", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Transaction> incomingTransactions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sourceCard", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Transaction> outgoingTransactions = new ArrayList<>();
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 10)
@@ -69,7 +72,7 @@ public class Card {
     }
 
     @Override
-    public int hashCode() { //TODO Заменить encryptedNumber на cardHash
+    public int hashCode() {
         return Objects.hash(cardHash, expirationDate);
     }
 }

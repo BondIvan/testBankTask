@@ -15,8 +15,14 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     @Query(value = """
     SELECT SUM(tr.amount)
     FROM Transaction tr
-    WHERE tr.card.id = :cardId AND tr.transactionDate >= :from
-        AND tr.transactionDate < :to
+    WHERE tr.sourceCard.id = :sourceCardId
+        AND tr.direction = 'OUTGOING'
+        AND tr.createdAt >= :from
+        AND tr.createdAt < :to
     """)
-    BigDecimal findSumTransactionsByCardIdAndPeriod(@Param("cardId") Long cardId, @Param("from")Instant from, @Param("to") Instant to);
+    BigDecimal findOutgoingSumTransactionsByCardIdAndPeriod(
+            @Param("cardId") Long sourceCardId,
+            @Param("from") Instant from,
+            @Param("to") Instant to
+    );
 }

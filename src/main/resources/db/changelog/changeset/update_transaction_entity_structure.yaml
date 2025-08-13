@@ -1,0 +1,138 @@
+databaseChangeLog:
+  - changeSet:
+      id: update-transaction-entity-structure
+      author: boiv
+      changes:
+        # Remove old foreign key
+        - dropForeignKeyConstraint:
+            baseTableName: transactions
+            constraintName: fk_transactions_card
+
+        # Add new columns
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: direction
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: true
+
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: source_card_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: target_card_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: transfer_group_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: true
+
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: created_at
+                  type: DATETIME(3)
+                  constraints:
+                    nullable: true
+
+        # transferring data from old rows
+        - sql:
+            comment: "transaction_date -> created_at"
+            sql: |
+              UPDATE transactions
+              SET created_at = transaction_date
+              WHERE created_at IS NULL AND transaction_date IS NOT NULL;
+
+        - sql:
+            comment: "card_id -> source_card_id"
+            sql: |
+              UPDATE transactions
+              SET source_card_id = card_id
+              WHERE source_card_id IS NULL AND card_id IS NOT NULL;
+
+        - sql:
+            comment: "fill direction: WRITE_OFF -> OUTGOING, REPLENISHMENT -> INCOMING"
+            sql: |
+              UPDATE transactions
+              SET direction = CASE
+                                WHEN type = 'WRITE_OFF' THEN 'OUTGOING'
+                                WHEN type = 'REPLENISHMENT' THEN 'INCOMING'
+                                ELSE 'OUTGOING'
+                              END
+              WHERE direction IS NULL;
+
+        - sql:
+            comment: "generate UUID for transfer_group_id"
+            sql: |
+              UPDATE transactions
+              SET transfer_group_id = UUID()
+              WHERE transfer_group_id IS NULL;
+
+        # Add foreign keys
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: source_card_id
+            referencedTableName: cards
+            referencedColumnNames: id
+            constraintName: fk_transactions_source_card
+
+        - addForeignKeyConstraint:
+            baseTableName: transactions
+            baseColumnNames: target_card_id
+            referencedTableName: cards
+            referencedColumnNames: id
+            constraintName: fk_transactions_target_card
+
+        # Add not null constraint for source_card_id, direction, created_at
+        - addNotNullConstraint:
+            tableName: transactions
+            columnName: source_card_id
+            columnDataType: BIGINT
+
+        - addNotNullConstraint:
+            tableName: transactions
+            columnName: direction
+            columnDataType: VARCHAR(32)
+
+        - addNotNullConstraint:
+            tableName: transactions
+            columnName: created_at
+            columnDataType: DATETIME(3)
+
+        # Add unique constraint
+        - addUniqueConstraint:
+            tableName: transactions
+            columnNames: transfer_group_id, source_card_id, direction
+            constraintName: uq_transactions_group_source_card_direction
+
+        # Delete old columns
+        - dropColumn:
+            tableName: transactions
+            columnName: card_id
+
+        - dropColumn:
+            tableName: transactions
+            columnName: target_masked_card
+
+        - dropColumn:
+            tableName: transactions
+            columnName: transaction_date

@@ -1,22 +1,45 @@
 package com.testtask.bankcardmanagement.model;
 
+import com.testtask.bankcardmanagement.converter.TransactionDirectionConverter;
 import com.testtask.bankcardmanagement.converter.TransactionTypeConverter;
+import com.testtask.bankcardmanagement.model.enums.TransactionDirection;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "transactions")
+@Table(
+        name = "transactions",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_transactions_group_source_card_direction",
+                        columnNames = {"transfer_group_id", "source_card_id", "direction"}
+                )
+        }
+)
 @Entity
 public class Transaction {
     @Id
@@ -30,15 +53,24 @@ public class Transaction {
     @Convert(converter = TransactionTypeConverter.class)
     private TransactionType type;
 
-    @ManyToOne
-    @JoinColumn(name = "card_id")
-    private Card card;
+    @Convert(converter = TransactionDirectionConverter.class)
+    @Column(name = "direction", nullable = false)
+    private TransactionDirection direction;
 
-    @Column(name = "target_masked_card")
-    private String targetMaskedCard;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_card_id", nullable = false)
+    private Card sourceCard;
 
-    @Column(name = "transaction_date", nullable = false)
-    private LocalDateTime transactionDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_card_id")
+    private Card targetCard;
+
+    @Column(name = "transfer_group_id", columnDefinition = "VARCHAR(36)")
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    private UUID transferGroupId;
+
+    @Column(name = "created_at", nullable = false, columnDefinition = "DATETIME(3)")
+    private Instant createdAt;
 
     @Column(name = "description", columnDefinition = "text")
     private String description;
@@ -46,11 +78,14 @@ public class Transaction {
     @Override
     public String toString() {
         return "Transaction{" +
-                "amount=" + amount +
+                "id=" + id +
+                ", amount=" + amount +
                 ", type=" + type +
-                ", card=" + card +
-                ", targetMaskedCard='" + targetMaskedCard + '\'' +
-                ", transactionDate=" + transactionDate +
+                ", direction=" + direction +
+                ", sourceCardId=" + (sourceCard != null ? sourceCard.getId() : null) +
+                ", targetCardId=" + (targetCard != null ? targetCard.getId() : null) +
+                ", transferGroupId=" + transferGroupId +
+                ", createdAt=" + createdAt +
                 ", description='" + description + '\'' +
                 '}';
     }
@@ -60,13 +95,17 @@ public class Transaction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Transaction that = (Transaction) o;
-        return Objects.equals(type, that.type)
-                && Objects.equals(card, that.card)
-                && Objects.equals(transactionDate, that.transactionDate);
+        return Objects.equals(direction, that.direction)
+                && Objects.equals(getSourceCardId(), that.getSourceCardId())
+                && Objects.equals(transferGroupId, that.transferGroupId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, card, transactionDate);
+        return Objects.hash(direction, getSourceCardId(), transferGroupId);
+    }
+
+    private Long getSourceCardId() {
+        return (sourceCard != null) ? sourceCard.getId() : null;
     }
 }

@@ -50,7 +50,7 @@ public class LimitValidationService {
 
         DateRange range = window.windowForNow(clock);
 
-        BigDecimal spent = transactionRepository.findSumTransactionsByCardIdAndPeriod(card.getId(), range.from(), range.to());
+        BigDecimal spent = transactionRepository.findOutgoingSumTransactionsByCardIdAndPeriod(card.getId(), range.from(), range.to());
         BigDecimal amountAfterTransaction = spent.add(amount);
 
         if(amountAfterTransaction.compareTo(limit.getMaxAmount()) > 0) {
