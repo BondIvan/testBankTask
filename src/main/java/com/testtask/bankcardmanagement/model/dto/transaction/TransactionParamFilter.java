@@ -2,14 +2,15 @@ package com.testtask.bankcardmanagement.model.dto.transaction;
 
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public record TransactionParamFilter(
-        Long cardId,
-
+        String userEmail,
+// TODO Add new filters here
         TransactionType type,
 
-        LocalDateTime fromDate,
+        Instant fromDate,
 
-        LocalDateTime toDate
+        Instant toDate
 ) { }

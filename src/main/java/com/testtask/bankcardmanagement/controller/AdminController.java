@@ -76,7 +76,7 @@ public class AdminController {
     }
 
     @GetMapping("/get-all-cards")
-    public ResponseEntity<PagedModel<EntityModel<CardResponse>>> getAllCards( //TODO Move to admin service
+    public ResponseEntity<PagedModel<EntityModel<CardResponse>>> getAllCards(
             @Valid CardParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,

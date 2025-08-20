@@ -4,6 +4,7 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
+import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
@@ -12,7 +13,7 @@ import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
 import com.testtask.bankcardmanagement.model.dto.user.EmailReplacementRequest;
 import com.testtask.bankcardmanagement.model.dto.user.PasswordReplacementRequest;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
-import com.testtask.bankcardmanagement.model.enums.TransactionType;
+import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import com.testtask.bankcardmanagement.service.user.UserActService;
 import com.testtask.bankcardmanagement.service.user.UserProfileService;
 import jakarta.validation.Valid;
@@ -31,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -41,6 +41,7 @@ public class UserController {
     private final UserProfileService userProfileService;
     private final UserActService userActService;
     private final ValidationSortableField sortableField;
+    private final TransactionService transactionService;
 
     @PostMapping("/update-email")
     public ResponseEntity<CommonUserResponse> updateUserEmail(
@@ -100,23 +101,18 @@ public class UserController {
 //        return null;
 //    }
 
-    @GetMapping("/get-transactions-by-user-card/{cardId}")
+    @GetMapping("/get-transactions/{cardId}")
     public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,
-//            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
+            @Valid TransactionParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "null") TransactionType type,
-            @RequestParam(defaultValue = "null") LocalDateTime from,
-            @RequestParam(defaultValue = "null") LocalDateTime to,
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {
         sortableField.validTransactionFields(sortList);
         return ResponseEntity.ok(
-                null
-//                transactionService.getTransactionsByUserCard(cardId, transactionParamFilter, page, size,
-//                        type, from, to, sortList, sortOrder)
+                userActService.getAllTransactionsByCardId(cardId, filter, page, size, sortList, sortOrder)
         );
     }
 

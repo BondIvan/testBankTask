@@ -51,11 +51,11 @@ public class Limit {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Limit limit = (Limit) o;
-        return Objects.equals(card, limit.card) && limitType == limit.limitType;
+        return Objects.equals(maxAmount, limit.maxAmount) && limitType == limit.limitType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(card, limitType);
+        return Objects.hash(maxAmount, limitType);
     }
 }
