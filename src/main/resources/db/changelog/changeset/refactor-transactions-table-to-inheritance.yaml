@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: refactor-transactions-table-to-inheritance
+      author: boiv
+      comment: "Refactor transactions table to support a single-table inheritance model"
+      changes:
+        # Add discriminator column, temporarily nullable.
+        - addColumn:
+            tableName: transactions
+            columns:
+              - column:
+                  name: transaction_type
+                  type: VARCHAR(255)
+
+        - dropNotNullConstraint:
+            tableName: transactions
+            columnName: source_card_id
+            columnDataType: BIGINT
+
+        - sql:
+            comment: "Fill transaction_type depends on fields: type, source_card_id and target_card_id"
+            sql: |
+              UPDATE transactions
+              SET transaction_type = CASE
+                                        WHEN type = 'REPLENISHMENT' THEN 'REPLENISHMENT'
+                                        WHEN type = 'WRITE_OFF' AND target_card_id IS NULL THEN 'WITHDRAWAL'
+                                        WHEN type = 'WRITE_OFF' AND target_card_id IS NOT NULL THEN 'TRANSFER'
+                                     END
+              WHERE transaction_type IS NULL;
+              
+        # Making column transaction_type mandatory.
+        - addNotNullConstraint:
+            tableName: transactions
+            columnName: transaction_type
+            columnDataType: VARCHAR(255)
+
+        # Remove old unique constraint for source_card_id
+        - dropUniqueConstraint:
+            tableName: transactions
+            constraintName: uq_transactions_group_source_card_direction
+
+        # Delete old columns
+        - dropColumn:
+            tableName: transactions
+            columnName: type
+
+        - dropColumn:
+            tableName: transactions
+            columnName: direction

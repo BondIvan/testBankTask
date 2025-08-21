@@ -6,7 +6,6 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
-import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.service.user.AdminActService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -96,9 +95,6 @@ public class AdminController {
 //            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "null") TransactionType type,
-            @RequestParam(defaultValue = "null") LocalDateTime from,
-            @RequestParam(defaultValue = "null") LocalDateTime to,
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {

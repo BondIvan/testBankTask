@@ -1,6 +1,5 @@
 package com.testtask.bankcardmanagement.model.dto.transaction;
 
-import com.testtask.bankcardmanagement.model.enums.TransactionDirection;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 
 import java.math.BigDecimal;
@@ -11,8 +10,6 @@ public record TransactionResponse(
         BigDecimal amount,
 
         TransactionType type,
-
-        TransactionDirection direction,
 
         Long sourceCardId,
 

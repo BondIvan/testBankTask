@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/changeset/add_unique_constraint_to_limits.yaml
   - include:
       file: db/changelog/changeset/update_transaction_entity_structure.yaml
+  - include:
+      file: db/changelog/changeset/refactor-transactions-table-to-inheritance.yaml

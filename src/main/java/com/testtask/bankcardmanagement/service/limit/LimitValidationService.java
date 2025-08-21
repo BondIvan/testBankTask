@@ -5,7 +5,7 @@ import com.testtask.bankcardmanagement.exception.limit.LimitException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.Limit;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
-import com.testtask.bankcardmanagement.repository.TransactionRepository;
+import com.testtask.bankcardmanagement.repository.PaymentTransactionRepository;
 import com.testtask.bankcardmanagement.service.limit.windowStrategy.DateRange;
 import com.testtask.bankcardmanagement.service.limit.windowStrategy.DateWindowStrategy;
 import org.springframework.stereotype.Service;
@@ -21,11 +21,11 @@ import java.util.stream.Collectors;
 @Service
 public class LimitValidationService {
     private final Clock clock;
-    private final TransactionRepository transactionRepository;
+    private final PaymentTransactionRepository transactionRepository;
     private final Map<LimitType, DateWindowStrategy> limitTypeWindowStrategies;
 
     public LimitValidationService(Clock clock,
-                                  TransactionRepository transactionRepository,
+                                  PaymentTransactionRepository transactionRepository,
                                   List<DateWindowStrategy> strategies) {
         this.clock = clock;
         this.transactionRepository = transactionRepository;
@@ -50,7 +50,8 @@ public class LimitValidationService {
 
         DateRange range = window.windowForNow(clock);
 
-        BigDecimal spent = transactionRepository.findOutgoingSumTransactionsByCardIdAndPeriod(card.getId(), range.from(), range.to());
+        //TODO Нужна сумма транзакций по карте за период
+        BigDecimal spent = BigDecimal.ZERO; // transactionRepository.findOutgoingSumTransactionsByCardIdAndPeriod(card.getId(), range.from(), range.to());
         BigDecimal amountAfterTransaction = spent.add(amount);
 
         if(amountAfterTransaction.compareTo(limit.getMaxAmount()) > 0) {

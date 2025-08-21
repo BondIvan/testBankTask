@@ -2,7 +2,18 @@ package com.testtask.bankcardmanagement.model;
 
 import com.testtask.bankcardmanagement.converter.CardStatusConverter;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,12 +56,6 @@ public class Card {
 
     @Column(name = "balance", nullable = false, precision = 15, scale = 2)
     private BigDecimal balance;
-
-    @OneToMany(mappedBy = "targetCard", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Transaction> incomingTransactions = new ArrayList<>();
-
-    @OneToMany(mappedBy = "sourceCard", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Transaction> outgoingTransactions = new ArrayList<>();
 
     @OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @BatchSize(size = 10)
