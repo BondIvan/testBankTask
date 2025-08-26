@@ -1,8 +1,16 @@
 package com.testtask.bankcardmanagement.service.transaction;
 
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
-import com.testtask.bankcardmanagement.model.mapper.TransactionMapper;
+import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
+import com.testtask.bankcardmanagement.exception.card.CardNotAvailableException;
+import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
+import com.testtask.bankcardmanagement.model.Card;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionParamFilter;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionResponse;
+import com.testtask.bankcardmanagement.model.enums.CardStatus;
+import com.testtask.bankcardmanagement.model.transaction.ReplenishmentTransaction;
+import com.testtask.bankcardmanagement.model.transaction.TransferTransaction;
+import com.testtask.bankcardmanagement.model.transaction.WithdrawalTransaction;
+import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.PaymentTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -10,17 +18,109 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.Clock;
 import java.util.List;
+import java.util.UUID;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class TransactionService {
     private final PaymentTransactionRepository transactionRepository;
-    private final TransactionMapper transactionMapper;
+    private final Clock clock;
+    private final CardRepository cardRepository;
 
-    public Page<TransactionResponse> getAllTransactionsByCardId(Long cardId, TransactionParamFilter filter, int page, int size,
-                                                       List<String> sortList, String sortOrder) {
+    @Transactional
+    public ReplenishmentTransaction createReplenishmentTransaction(Card targetCard, BigDecimal amount, String description) {
+        Long targetCardId = targetCard.getId();
+        Card lockTargetCard = cardRepository.findCardByIdForUpdate(targetCardId)
+                .orElseThrow(() -> new CardNotFoundException("Target card not found during transaction lock."));
+
+        if(lockTargetCard.getStatus() == CardStatus.EXPIRED)
+            throw new CardNotAvailableException("Cannot make replenishment to the card because it " + lockTargetCard.getStatus());
+
+        ReplenishmentTransaction replenishment = new ReplenishmentTransaction();
+        replenishment.setTransferGroupId(null);
+        replenishment.setAmount(amount);
+        replenishment.setTargetCard(lockTargetCard);
+        replenishment.setCreatedAt(clock.instant());
+        replenishment.setDescription(description);
+
+        lockTargetCard.setBalance(lockTargetCard.getBalance().add(amount));
+        cardRepository.save(lockTargetCard);
+
+        return transactionRepository.save(replenishment);
+    }
+
+    @Transactional
+    public WithdrawalTransaction createWithdrawalTransaction(Card sourceCard, BigDecimal amount, String description) {
+        Long sourceCardId = sourceCard.getId();
+        Card lockSourceCard = cardRepository.findCardByIdForUpdate(sourceCardId)
+                .orElseThrow(() -> new CardNotFoundException("Source card not found during transaction lock."));
+
+        if(lockSourceCard.getBalance().compareTo(amount) < 0)
+            throw new CardBalanceException("Not enough funds on the card for making withdrawal.");
+
+        if(lockSourceCard.getStatus() == CardStatus.BLOCKED || lockSourceCard.getStatus() == CardStatus.EXPIRED)
+            throw new CardNotAvailableException("Cannot make withdrawal because of status card is " + lockSourceCard.getStatus());
+
+        //TODO Check source card limits
+
+        WithdrawalTransaction withdrawal = new WithdrawalTransaction();
+
+        withdrawal.setTransferGroupId(null);
+        withdrawal.setAmount(amount);
+        withdrawal.setSourceCard(lockSourceCard);
+        withdrawal.setCreatedAt(clock.instant());
+        withdrawal.setDescription(description);
+
+        lockSourceCard.setBalance(lockSourceCard.getBalance().subtract(amount));
+        cardRepository.save(lockSourceCard);
+
+        return transactionRepository.save(withdrawal);
+    }
+
+    @Transactional
+    public TransferTransaction createTransferTransaction(Card sourceCard, Card targetCard, BigDecimal amount, String description) {
+        Long sourceCardId = sourceCard.getId();
+        Long targetCardId = targetCard.getId();
+
+        Card lockSourceCard = cardRepository.findCardByIdForUpdate(sourceCardId)
+                .orElseThrow(() -> new CardNotFoundException("Source card not found during transaction lock."));
+        Card lockTargetCard = cardRepository.findCardByIdForUpdate(targetCardId)
+                .orElseThrow(() -> new CardNotFoundException("Target card not found during transaction lock."));
+
+        if(lockSourceCard.getStatus() == CardStatus.EXPIRED || lockSourceCard.getStatus() == CardStatus.BLOCKED)
+            throw new CardNotAvailableException("Cannot make transfer because of status source card is " + lockSourceCard.getStatus());
+
+        if(lockSourceCard.getBalance().compareTo(amount) < 0)
+            throw new CardBalanceException("Not enough funds on the source card for making transfer.");
+
+        //TODO Check source card limits
+
+        if(lockTargetCard.getStatus() == CardStatus.EXPIRED)
+            throw new CardNotAvailableException("Cannot make transfer because of status target card is " + lockTargetCard.getStatus());
+
+        TransferTransaction transfer = new TransferTransaction();
+        transfer.setSourceCard(lockSourceCard);
+        transfer.setTargetCard(lockTargetCard);
+        transfer.setTransferGroupId(UUID.randomUUID());
+        transfer.setAmount(amount);
+        transfer.setCreatedAt(clock.instant());
+        transfer.setDescription(description);
+
+        lockSourceCard.setBalance(lockSourceCard.getBalance().subtract(amount));
+        lockTargetCard.setBalance(lockTargetCard.getBalance().add(amount));
+
+        cardRepository.saveAll(List.of(lockSourceCard, lockTargetCard));
+
+        return transactionRepository.save(transfer);
+    }
+
+    public Page<PaymentTransactionResponse> getAllTransactionsByCardId(Long cardId, PaymentTransactionParamFilter filter, int page, int size,
+                                                                       List<String> sortList, String sortOrder) {
 
         List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));

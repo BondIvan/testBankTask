@@ -5,8 +5,8 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionParamFilter;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionResponse;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.limit.LimitService;
@@ -47,11 +47,11 @@ public class UserActService {
         return limitService.removeCardLimit(currentUser.getId(), cardId, limitType);
     }
 
-    public Page<TransactionResponse> getAllTransactionsByCardId(Long cardId, TransactionParamFilter filter, int page, int size,
-                                                        List<String> sortList, String sortOrder) {
+    public Page<PaymentTransactionResponse> getAllTransactionsByCardId(Long cardId, PaymentTransactionParamFilter filter, int page, int size,
+                                                                       List<String> sortList, String sortOrder) {
         User currentUser = getCurrentUser();
 
-        TransactionParamFilter filterByCurrentUser = new TransactionParamFilter(
+        PaymentTransactionParamFilter filterByCurrentUser = new PaymentTransactionParamFilter(
                 currentUser.getEmail(),
                 filter.type(),
                 filter.fromDate(),

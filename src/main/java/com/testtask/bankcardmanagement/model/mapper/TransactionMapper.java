@@ -1,6 +1,6 @@
 package com.testtask.bankcardmanagement.model.mapper;
 
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionResponse;
 import com.testtask.bankcardmanagement.model.enums.TransactionType;
 import com.testtask.bankcardmanagement.model.transaction.AbstractPaymentTransaction;
 import com.testtask.bankcardmanagement.model.transaction.ReplenishmentTransaction;
@@ -15,9 +15,9 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Component
 public class TransactionMapper {
-    private Clock clock;
+    private final Clock clock;
 
-    public TransactionResponse toTransactionResponse(AbstractPaymentTransaction transaction) {
+    public PaymentTransactionResponse toTransactionResponse(AbstractPaymentTransaction transaction) {
         TransactionType type = null;
         Long sourceCardId = null;
         Long targetCardId = null;
@@ -34,7 +34,7 @@ public class TransactionMapper {
             targetCardId = transfer.getTargetCard().getId();
         }
 
-        return new TransactionResponse(
+        return new PaymentTransactionResponse(
                 transaction.getAmount(),
                 type,
                 sourceCardId,

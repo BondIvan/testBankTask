@@ -4,17 +4,18 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionParamFilter;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionTransferRequest;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionWriteOffRequest;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionParamFilter;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionReplenishmentRequest;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionTransferRequest;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionWithdrawalRequest;
 import com.testtask.bankcardmanagement.model.dto.user.BlockRequest;
 import com.testtask.bankcardmanagement.model.dto.user.CommonUserResponse;
 import com.testtask.bankcardmanagement.model.dto.user.EmailReplacementRequest;
 import com.testtask.bankcardmanagement.model.dto.user.PasswordReplacementRequest;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
-import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import com.testtask.bankcardmanagement.service.user.UserActService;
+import com.testtask.bankcardmanagement.service.user.UserPaymentService;
 import com.testtask.bankcardmanagement.service.user.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class UserController {
     private final UserProfileService userProfileService;
     private final UserActService userActService;
     private final ValidationSortableField sortableField;
-    private final TransactionService transactionService;
+    private final UserPaymentService userPaymentService;
 
     @PostMapping("/update-email")
     public ResponseEntity<CommonUserResponse> updateUserEmail(
@@ -102,9 +103,9 @@ public class UserController {
 //    }
 
     @GetMapping("/get-transactions/{cardId}")
-    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
+    public ResponseEntity<Page<PaymentTransactionResponse>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,
-            @Valid TransactionParamFilter filter,
+            @Valid PaymentTransactionParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") List<String> sortList,
@@ -116,17 +117,27 @@ public class UserController {
         );
     }
 
-    @PostMapping("/write-off")
-    public ResponseEntity<TransactionResponse> writeOff(@RequestBody @Valid TransactionWriteOffRequest transactionWriteOffRequest) {
-//        TransactionResponse transactionResponse = transactionOperationService.writeOff(transactionWriteOffRequest);
-//        return ResponseEntity.ok(transactionResponse);
-        return null;
+    @PostMapping("/payment/withdrawal")
+    public ResponseEntity<PaymentTransactionResponse> withdrawal(
+            @RequestBody @Valid PaymentTransactionWithdrawalRequest request) {
+
+        PaymentTransactionResponse response = userPaymentService.createWithdrawalTransaction(request);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/transfer")
-    public ResponseEntity<TransactionResponse> transfer(@RequestBody @Valid TransactionTransferRequest transactionTransferRequest) {
-//        TransactionResponse transactionResponse = transactionOperationService.transfer(transactionTransferRequest);
-//        return ResponseEntity.ok(transactionResponse);
-        return null;
+    @PostMapping("/payment/replenishment")
+    public ResponseEntity<PaymentTransactionResponse> replenishment(
+            @RequestBody @Valid PaymentTransactionReplenishmentRequest request) {
+
+        PaymentTransactionResponse response = userPaymentService.createReplenishmentTransaction(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/payment/transfer")
+    public ResponseEntity<PaymentTransactionResponse> transfer(
+            @RequestBody @Valid PaymentTransactionTransferRequest request) {
+
+        PaymentTransactionResponse response = userPaymentService.createTransferTransaction(request);
+        return ResponseEntity.ok(response);
     }
 }

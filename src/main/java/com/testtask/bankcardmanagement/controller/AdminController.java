@@ -5,7 +5,7 @@ import com.testtask.bankcardmanagement.model.dto.auth.RegistrationRequest;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
-import com.testtask.bankcardmanagement.model.dto.transaction.TransactionResponse;
+import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionResponse;
 import com.testtask.bankcardmanagement.service.user.AdminActService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -90,7 +89,7 @@ public class AdminController {
     }
 
     @GetMapping("/get-transactions-by-card/{cardId}")
-    public ResponseEntity<Page<TransactionResponse>> getTransactionsByCard(
+    public ResponseEntity<Page<PaymentTransactionResponse>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,
 //            @RequestBody @Valid TransactionParamFilter transactionParamFilter,
             @RequestParam(defaultValue = "0") int page,

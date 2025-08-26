@@ -8,7 +8,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.BatchSize;
 
 @Getter
 @Setter
@@ -17,11 +16,9 @@ import org.hibernate.annotations.BatchSize;
 public class TransferTransaction extends AbstractPaymentTransaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_card_id", nullable = false)
-    @BatchSize(size = 10)
     private Card sourceCard;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_card_id", nullable = false)
-    @BatchSize(size = 10)
     private Card targetCard;
 }
