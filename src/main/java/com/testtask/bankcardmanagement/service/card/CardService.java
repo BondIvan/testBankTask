@@ -68,11 +68,10 @@ public class CardService {
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such card id."));
     }
 
-    //TODO Это нужно сделать лучше. Argon2 не для этой ситуации. Нужнен более быстрый алгоритм с ключом.
     public Card getCardByUserAndNumber(Long userId, String cardNumber) {
-        return cardRepository.findAllCardsForUser(userId).stream()
-                .filter(card -> hashCardNumber.isEquals(cardNumber, card.getCardHash()))
-                .findFirst()
+        String cardHash = hashCardNumber.hash(cardNumber);
+
+        return cardRepository.findCardByUserIdAndCardHash(userId, cardHash)
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such number."));
     }
 

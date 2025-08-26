@@ -18,7 +18,7 @@ public class AESEncryption {
     private static final int GCM_TAG_LENGTH = 128;
     private final SecretKeySpec secretKeySpec;
 
-    public AESEncryption(@Value("${my.encrypt_key}") String key) {
+    public AESEncryption(@Value("${my.card.encryption_card_number_key}") String key) {
         byte[] bytes = key.getBytes();
         this.secretKeySpec = new SecretKeySpec(bytes, "AES");
     }

@@ -15,9 +15,12 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 my:
-  encrypt_key: ${SPRING_ENCRYPTION_KEY_CARD_NUMBER:default-value}
-  encryption_key: ${SPRING_ENCRYPTION_KEY_JWT:default-value}
-  expired_in_days: 1
+  card:
+    encryption_card_number_key: ${SPRING_ENCRYPTION_KEY_CARD_NUMBER:default-value} # 32 byte
+    hash_card_number_key: ${SPRING_HASH_KEY_CARD_NUMBER:default-value} # should be strong
+  jwt:
+    encryption_jwt_key: ${SPRING_ENCRYPTION_KEY_JWT:default-value}
+    expired_jwt_in_days: ${SPRING_EXPIRED_JWT_IN_DAYS:1}
 
 cors:
   allowed-origins:

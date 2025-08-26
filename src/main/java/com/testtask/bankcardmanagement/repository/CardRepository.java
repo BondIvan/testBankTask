@@ -13,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,14 +27,11 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
     @Query(value = "SELECT c FROM Card c WHERE c.id = :cardId")
     Optional<Card> findCardByIdForUpdate(@Param("cardId") Long cardId);
 
-    @Query(value = "SELECT c FROM Card c JOIN c.user WHERE c.user.id = :userId AND c.id = :cardId")
-    Optional<Card> findCardByUserIdAndCardId(@Param("userId") Long userId, @Param("cardId") Long cardId);
+    @Query(value = "SELECT c FROM Card c JOIN c.user WHERE c.user.id = :userId AND c.cardHash = :cardHash")
+    Optional<Card> findCardByUserIdAndCardHash(@Param("userId") Long userId, @Param("cardHash") String cardHash);
 
     @Query(value = "SELECT c FROM Card c LEFT JOIN FETCH c.limits JOIN c.user WHERE c.user.id = :userId AND c.id = :cardId")
     Optional<Card> findCardWithLimitsByUserIdAndCardId(@Param("userId") Long userId, @Param("cardId") Long cardId);
-
-    @Query(value = "SELECT c FROM Card c WHERE c.user.id = :userId")
-    List<Card> findAllCardsForUser(@Param("userId") Long userId);
 
     @Override
     @EntityGraph(attributePaths = "user")

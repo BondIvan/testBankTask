@@ -20,10 +20,10 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
-    @Value("${my.expired_in_days}")
+    @Value("${my.jwt.expired_jwt_in_days}")
     private long expired_in_days;
 
-    @Value("${my.encryption_key}")
+    @Value("${my.jwt.encryption_jwt_key}")
     private String valueForInject;
 
     private static String KEY;
