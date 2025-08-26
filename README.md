@@ -18,6 +18,10 @@ password: admin12345
     * скопировать значение и вставить в ENCRYPTION_KEY_JWT
   * ENCRYPTION_KEY_CARD_NUMBER:
     * заполнить поле ENCRYPTION_KEY_CARD_NUMBER (любые 32 символа)
+  * SPRING_HASH_KEY_CARD_NUMBER:
+    * любое значение (чем сложнее, тем лучше)
+  * SPRING_EXPIRED_JWT_IN_DAYS:
+    * любое положительное число. По умолчанию равно 1
 * выполнить команду "docker compose up"
 
 Если не указывать поля в application-template, значения по умолчанию установятся в "default-value"
