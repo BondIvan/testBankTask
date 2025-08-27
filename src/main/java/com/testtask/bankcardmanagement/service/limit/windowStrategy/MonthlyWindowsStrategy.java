@@ -1,7 +1,6 @@
 package com.testtask.bankcardmanagement.service.limit.windowStrategy;
 
 import com.testtask.bankcardmanagement.model.enums.LimitType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -9,7 +8,6 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 
 @Component
-@RequiredArgsConstructor
 public class MonthlyWindowsStrategy implements DateWindowStrategy {
     @Override
     public DateRange windowForNow(Clock clock) {
@@ -18,7 +16,7 @@ public class MonthlyWindowsStrategy implements DateWindowStrategy {
 
         return new DateRange(
                 now.withDayOfMonth(1).atStartOfDay(zoneId).toInstant(),
-                now.plusMonths(1).atStartOfDay(zoneId).toInstant()
+                now.plusMonths(1).withDayOfMonth(1).atStartOfDay(zoneId).toInstant()
         );
     }
 
