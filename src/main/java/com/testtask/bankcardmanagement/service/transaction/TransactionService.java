@@ -12,6 +12,7 @@ import com.testtask.bankcardmanagement.model.transaction.TransferTransaction;
 import com.testtask.bankcardmanagement.model.transaction.WithdrawalTransaction;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.PaymentTransactionRepository;
+import com.testtask.bankcardmanagement.service.limit.LimitValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +32,7 @@ public class TransactionService {
     private final PaymentTransactionRepository transactionRepository;
     private final Clock clock;
     private final CardRepository cardRepository;
+    private final LimitValidationService limitValidationService;
 
     @Transactional
     public ReplenishmentTransaction createReplenishmentTransaction(Card targetCard, BigDecimal amount, String description) {
@@ -57,7 +59,7 @@ public class TransactionService {
     @Transactional
     public WithdrawalTransaction createWithdrawalTransaction(Card sourceCard, BigDecimal amount, String description) {
         Long sourceCardId = sourceCard.getId();
-        Card lockSourceCard = cardRepository.findCardByIdForUpdate(sourceCardId)
+        Card lockSourceCard = cardRepository.findCardWithLimitsByIdForUpdate(sourceCardId)
                 .orElseThrow(() -> new CardNotFoundException("Source card not found during transaction lock."));
 
         if(lockSourceCard.getBalance().compareTo(amount) < 0)
@@ -66,7 +68,7 @@ public class TransactionService {
         if(lockSourceCard.getStatus() == CardStatus.BLOCKED || lockSourceCard.getStatus() == CardStatus.EXPIRED)
             throw new CardNotAvailableException("Cannot make withdrawal because of status card is " + lockSourceCard.getStatus());
 
-        //TODO Check source card limits
+        limitValidationService.areLimitsExceeded(lockSourceCard, amount);
 
         WithdrawalTransaction withdrawal = new WithdrawalTransaction();
 
@@ -87,9 +89,9 @@ public class TransactionService {
         Long sourceCardId = sourceCard.getId();
         Long targetCardId = targetCard.getId();
 
-        Card lockSourceCard = cardRepository.findCardByIdForUpdate(sourceCardId)
+        Card lockSourceCard = cardRepository.findCardWithLimitsByIdForUpdate(sourceCardId)
                 .orElseThrow(() -> new CardNotFoundException("Source card not found during transaction lock."));
-        Card lockTargetCard = cardRepository.findCardByIdForUpdate(targetCardId)
+        Card lockTargetCard = cardRepository.findCardWithLimitsByIdForUpdate(targetCardId)
                 .orElseThrow(() -> new CardNotFoundException("Target card not found during transaction lock."));
 
         if(lockSourceCard.getStatus() == CardStatus.EXPIRED || lockSourceCard.getStatus() == CardStatus.BLOCKED)
@@ -98,7 +100,7 @@ public class TransactionService {
         if(lockSourceCard.getBalance().compareTo(amount) < 0)
             throw new CardBalanceException("Not enough funds on the source card for making transfer.");
 
-        //TODO Check source card limits
+        limitValidationService.areLimitsExceeded(lockSourceCard, amount);
 
         if(lockTargetCard.getStatus() == CardStatus.EXPIRED)
             throw new CardNotAvailableException("Cannot make transfer because of status target card is " + lockTargetCard.getStatus());

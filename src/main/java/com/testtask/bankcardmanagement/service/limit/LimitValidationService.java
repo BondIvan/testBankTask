@@ -36,11 +36,9 @@ public class LimitValidationService {
                 ));
     }
 
-    public boolean areLimitsExceeded(Card cardWithLimits, BigDecimal transactionAmount) {
+    public void areLimitsExceeded(Card cardWithLimits, BigDecimal transactionAmount) {
         for(Limit limit: cardWithLimits.getLimits())
             checkLimit(cardWithLimits, limit, transactionAmount);
-
-        return true;
     }
 
     private void checkLimit(Card card, Limit limit, BigDecimal amount) {
@@ -50,8 +48,7 @@ public class LimitValidationService {
 
         DateRange range = window.windowForNow(clock);
 
-        //TODO Нужна сумма транзакций по карте за период
-        BigDecimal spent = BigDecimal.ZERO; // transactionRepository.findOutgoingSumTransactionsByCardIdAndPeriod(card.getId(), range.from(), range.to());
+        BigDecimal spent = transactionRepository.findAmountSpentByCardAndPeriod(card.getId(), range.from(), range.to());
         BigDecimal amountAfterTransaction = spent.add(amount);
 
         if(amountAfterTransaction.compareTo(limit.getMaxAmount()) > 0) {

@@ -27,6 +27,10 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
     @Query(value = "SELECT c FROM Card c WHERE c.id = :cardId")
     Optional<Card> findCardByIdForUpdate(@Param("cardId") Long cardId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query(value = "SELECT c FROM Card c LEFT JOIN FETCH c.limits WHERE c.id = :cardId")
+    Optional<Card> findCardWithLimitsByIdForUpdate(@Param("cardId") Long cardId);
+
     @Query(value = "SELECT c FROM Card c JOIN c.user WHERE c.user.id = :userId AND c.cardHash = :cardHash")
     Optional<Card> findCardByUserIdAndCardHash(@Param("userId") Long userId, @Param("cardHash") String cardHash);
 
