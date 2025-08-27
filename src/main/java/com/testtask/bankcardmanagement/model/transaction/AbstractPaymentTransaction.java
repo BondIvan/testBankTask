@@ -40,9 +40,9 @@ public abstract class AbstractPaymentTransaction {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "transfer_group_id", columnDefinition = "VARCHAR(36)")
+    @Column(name = "transaction_number", columnDefinition = "VARCHAR(36)")
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    private UUID transferGroupId;
+    private UUID transactionNumber;
 
     @Override
     public boolean equals(Object o) {

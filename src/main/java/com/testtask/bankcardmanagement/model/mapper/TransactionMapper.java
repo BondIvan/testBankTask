@@ -39,7 +39,7 @@ public class TransactionMapper {
                 type,
                 sourceCardId,
                 targetCardId,
-                transaction.getTransferGroupId(),
+                transaction.getTransactionNumber(),
                 LocalDateTime.ofInstant(transaction.getCreatedAt(), clock.getZone()),
                 transaction.getDescription()
         );

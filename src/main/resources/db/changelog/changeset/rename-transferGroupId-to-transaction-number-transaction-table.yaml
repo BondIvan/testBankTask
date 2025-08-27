@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: rename-transferGroupId-to-transaction-number
+      author: ivbo
+      changes:
+        - renameColumn:
+            tableName: transactions
+            columnDataType: VARCHAR(36)
+            oldColumnName: transfer_group_id
+            newColumnName: transaction_number

@@ -15,3 +15,5 @@ databaseChangeLog:
       file: db/changelog/changeset/update_transaction_entity_structure.yaml
   - include:
       file: db/changelog/changeset/refactor-transactions-table-to-inheritance.yaml
+  - include:
+      file: db/changelog/changeset/rename-transferGroupId-to-transaction-number-transaction-table.yaml

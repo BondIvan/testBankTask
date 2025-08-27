@@ -42,7 +42,7 @@ public class TransactionService {
             throw new CardNotAvailableException("Cannot make replenishment to the card because it " + lockTargetCard.getStatus());
 
         ReplenishmentTransaction replenishment = new ReplenishmentTransaction();
-        replenishment.setTransferGroupId(null);
+        replenishment.setTransactionNumber(UUID.randomUUID());
         replenishment.setAmount(amount);
         replenishment.setTargetCard(lockTargetCard);
         replenishment.setCreatedAt(clock.instant());
@@ -70,7 +70,7 @@ public class TransactionService {
 
         WithdrawalTransaction withdrawal = new WithdrawalTransaction();
 
-        withdrawal.setTransferGroupId(null);
+        withdrawal.setTransactionNumber(UUID.randomUUID());
         withdrawal.setAmount(amount);
         withdrawal.setSourceCard(lockSourceCard);
         withdrawal.setCreatedAt(clock.instant());
@@ -106,7 +106,7 @@ public class TransactionService {
         TransferTransaction transfer = new TransferTransaction();
         transfer.setSourceCard(lockSourceCard);
         transfer.setTargetCard(lockTargetCard);
-        transfer.setTransferGroupId(UUID.randomUUID());
+        transfer.setTransactionNumber(UUID.randomUUID());
         transfer.setAmount(amount);
         transfer.setCreatedAt(clock.instant());
         transfer.setDescription(description);
