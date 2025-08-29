@@ -13,9 +13,8 @@ import com.testtask.bankcardmanagement.service.security.SecurityService;
 import com.testtask.bankcardmanagement.service.security.jwt.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -48,7 +47,7 @@ public class AdminActService {
         cardService.deleteCardById(cardId);
     }
 
-    public Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
-        return cardService.getAllCards(filter, page, size, sortList, sortOrder);
+    public Page<CardResponse> getAllCards(CardParamFilter filter, Pageable pageable) {
+        return cardService.getAllCards(filter, pageable);
     }
 }

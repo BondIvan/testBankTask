@@ -31,7 +31,7 @@ public class UserActService {
     private final TransactionService transactionService;
     private final TransactionMapper transactionMapper;
 
-    public Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
+    public Page<CardResponse> getAllCards(CardParamFilter filter, Pageable pageable) {
         User currentUser = getCurrentUser();
 
         CardParamFilter filterByCurrentUser = new CardParamFilter(
@@ -39,7 +39,7 @@ public class UserActService {
                 currentUser.getEmail()
         );
 
-        return cardService.getAllCards(filterByCurrentUser, page, size, sortList, sortOrder);
+        return cardService.getAllCards(filterByCurrentUser, pageable);
     }
 
     public List<LimitResponse> updateCardLimit(Long cardId, LimitUpdateRequest request) {

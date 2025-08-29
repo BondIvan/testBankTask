@@ -10,6 +10,9 @@ import com.testtask.bankcardmanagement.service.user.AdminActService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -84,7 +87,11 @@ public class AdminController {
     )
     {
         sortableFieldService.validAdminCardFields(sortList);
-        Page<CardResponse> cardPage = adminActService.getAllCards(filter, page, size, sortList, sortOrder);
+        List<Sort.Order> sorted = sortableFieldService.createSortOrder(sortList, sortOrder);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sorted));
+        Page<CardResponse> cardPage = adminActService.getAllCards(filter, pageable);
+
         return ResponseEntity.ok(assembler.toModel(cardPage));
     }
 

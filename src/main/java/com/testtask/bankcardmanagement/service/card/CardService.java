@@ -18,9 +18,7 @@ import com.testtask.bankcardmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,9 +73,7 @@ public class CardService {
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such number."));
     }
 
-    public Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
-        List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
+    public Page<CardResponse> getAllCards(CardParamFilter filter, Pageable pageable) {
         Specification<Card> cardSpec = CardSpecification.build(filter);
 
         List<CardResponse> foundCards = cardRepository.findAll(cardSpec, pageable).stream()
@@ -109,13 +105,6 @@ public class CardService {
         cardRepository.delete(card);
 
         return true;
-    }
-
-    private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
-        Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
-        return sortList.stream()
-                .map(field -> new Sort.Order(sortDirection, field))
-                .toList();
     }
 
     private boolean doesUserHaveCardWithThisNumber(Long userId, String hashNewNumber) {

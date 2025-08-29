@@ -89,7 +89,11 @@ public class UserController {
     )
     {
         sortableFieldService.validCardFields(sortList);
-        Page<CardResponse> cardPage = userActService.getAllCards(filter, page, size, sortList, sortOrder);
+        List<Sort.Order> sorted = sortableFieldService.createSortOrder(sortList, sortOrder);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sorted));
+        Page<CardResponse> cardPage = userActService.getAllCards(filter, pageable);
+
         return ResponseEntity.ok(assembler.toModel(cardPage));
     }
 

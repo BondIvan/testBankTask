@@ -15,7 +15,7 @@ public record PaymentTransactionResponse(
 
         Long targetCardId,
 
-        UUID transactionGroupId,
+        UUID transactionNumber,
 
         LocalDateTime createdAt,
 
