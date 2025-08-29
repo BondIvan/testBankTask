@@ -5,8 +5,8 @@ import com.testtask.bankcardmanagement.exception.card.CardNotAvailableException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionParamFilter;
-import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionResponse;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
+import com.testtask.bankcardmanagement.model.transaction.AbstractPaymentTransaction;
 import com.testtask.bankcardmanagement.model.transaction.ReplenishmentTransaction;
 import com.testtask.bankcardmanagement.model.transaction.TransferTransaction;
 import com.testtask.bankcardmanagement.model.transaction.WithdrawalTransaction;
@@ -15,9 +15,8 @@ import com.testtask.bankcardmanagement.repository.PaymentTransactionRepository;
 import com.testtask.bankcardmanagement.service.limit.LimitValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -121,20 +120,15 @@ public class TransactionService {
         return transactionRepository.save(transfer);
     }
 
-    public Page<PaymentTransactionResponse> getAllTransactionsByCardId(Long cardId, PaymentTransactionParamFilter filter, int page, int size,
-                                                                       List<String> sortList, String sortOrder) {
+    public Page<AbstractPaymentTransaction> getAllTransactionsByCardId(Long cardId, PaymentTransactionParamFilter filter,
+                                                                       Pageable pageable) {
 
-        List<Sort.Order> sortOrderList = createSortOrder(sortList, sortOrder);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortOrderList));
-//        Specification<Transaction> transactionSpec = TransactionSpecification.build(filter, cardId);
+        Specification<AbstractPaymentTransaction> spec = PaymentTransactionSpecification
+                .byCardId(cardId)
+                .and(PaymentTransactionSpecification.byUserId(filter.userId()))
+                .and(PaymentTransactionSpecification.byCreatedAt(filter.fromDateAsInstant(clock), filter.toDateAsInstant(clock)))
+                .and(PaymentTransactionSpecification.byAmount(filter.fromAmount(), filter.toAmount()));
 
-        return null;
-    }
-
-    private List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
-        Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
-        return sortList.stream()
-                .map(field -> new Sort.Order(sortDirection, field))
-                .toList();
+        return transactionRepository.findAll(spec, pageable);
     }
 }

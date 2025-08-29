@@ -8,23 +8,28 @@ import com.testtask.bankcardmanagement.model.dto.limit.LimitUpdateRequest;
 import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionParamFilter;
 import com.testtask.bankcardmanagement.model.dto.transaction.PaymentTransactionResponse;
 import com.testtask.bankcardmanagement.model.enums.LimitType;
+import com.testtask.bankcardmanagement.model.mapper.TransactionMapper;
+import com.testtask.bankcardmanagement.model.transaction.AbstractPaymentTransaction;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.limit.LimitService;
 import com.testtask.bankcardmanagement.service.security.SecurityService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Component;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 @RequiredArgsConstructor
-@Component
 public class UserActService {
     private final CardService cardService;
     private final SecurityService securityService;
     private final LimitService limitService;
     private final TransactionService transactionService;
+    private final TransactionMapper transactionMapper;
 
     public Page<CardResponse> getAllCards(CardParamFilter filter, int page, int size, List<String> sortList, String sortOrder) {
         User currentUser = getCurrentUser();
@@ -47,19 +52,26 @@ public class UserActService {
         return limitService.removeCardLimit(currentUser.getId(), cardId, limitType);
     }
 
-    public Page<PaymentTransactionResponse> getAllTransactionsByCardId(Long cardId, PaymentTransactionParamFilter filter, int page, int size,
-                                                                       List<String> sortList, String sortOrder) {
+    public Page<PaymentTransactionResponse> getAllTransactionsByCardId(Long cardId,
+                                                                       PaymentTransactionParamFilter filter, Pageable pageable) {
         User currentUser = getCurrentUser();
-
         PaymentTransactionParamFilter filterByCurrentUser = new PaymentTransactionParamFilter(
-                currentUser.getEmail(),
+                currentUser.getId(),
                 filter.type(),
+                filter.fromAmount(),
+                filter.toAmount(),
                 filter.fromDate(),
                 filter.toDate()
         );
 
-        return transactionService.getAllTransactionsByCardId(cardId,
-                filterByCurrentUser, page, size, sortList, sortOrder);
+        Page<AbstractPaymentTransaction> pageTransactions =
+                transactionService.getAllTransactionsByCardId(cardId, filterByCurrentUser, pageable);
+
+        List<PaymentTransactionResponse> listTransactions = pageTransactions.stream()
+                .map(transactionMapper::toTransactionResponse)
+                .toList();
+
+        return new PageImpl<>(listTransactions, pageable, pageTransactions.getTotalElements());
     }
 
     private User getCurrentUser() {

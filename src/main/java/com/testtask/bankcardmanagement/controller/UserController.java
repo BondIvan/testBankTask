@@ -20,6 +20,9 @@ import com.testtask.bankcardmanagement.service.user.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -41,7 +44,7 @@ import java.util.List;
 public class UserController {
     private final UserProfileService userProfileService;
     private final UserActService userActService;
-    private final ValidationSortableField sortableField;
+    private final SortableFieldService sortableFieldService;
     private final UserPaymentService userPaymentService;
 
     @PostMapping("/update-email")
@@ -51,7 +54,7 @@ public class UserController {
         return ResponseEntity.ok(userProfileService.changeUserEmail(emailReplacementRequest));
     }
 
-    @PostMapping("/update-password") //TODO Добавить rate limiting на этот эндпоинт
+    @PostMapping("/update-password") //TODO Add rate limiting for this endpoint
     public ResponseEntity<String> updatePassword(
             @RequestBody @Valid PasswordReplacementRequest passwordReplacementRequest
     ) {
@@ -85,7 +88,7 @@ public class UserController {
             PagedResourcesAssembler<CardResponse> assembler
     )
     {
-        sortableField.validCardFields(sortList);
+        sortableFieldService.validCardFields(sortList);
         Page<CardResponse> cardPage = userActService.getAllCards(filter, page, size, sortList, sortOrder);
         return ResponseEntity.ok(assembler.toModel(cardPage));
     }
@@ -103,18 +106,22 @@ public class UserController {
 //    }
 
     @GetMapping("/get-transactions/{cardId}")
-    public ResponseEntity<Page<PaymentTransactionResponse>> getTransactionsByCard(
+    public ResponseEntity<PagedModel<EntityModel<PaymentTransactionResponse>>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,
             @Valid PaymentTransactionParamFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") List<String> sortList,
-            @RequestParam(defaultValue = "ASC") String sortOrder
+            @RequestParam(defaultValue = "ASC") String sortOrder,
+            PagedResourcesAssembler<PaymentTransactionResponse> assembler
     ) {
-        sortableField.validTransactionFields(sortList);
-        return ResponseEntity.ok(
-                userActService.getAllTransactionsByCardId(cardId, filter, page, size, sortList, sortOrder)
-        );
+        sortableFieldService.validTransactionFields(sortList);
+        List<Sort.Order> sorted = sortableFieldService.createSortOrder(sortList, sortOrder);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sorted));
+        Page<PaymentTransactionResponse> pageResponse = userActService.getAllTransactionsByCardId(cardId, filter, pageable);
+
+        return ResponseEntity.ok(assembler.toModel(pageResponse));
     }
 
     @PostMapping("/payment/withdrawal")

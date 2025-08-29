@@ -32,7 +32,7 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/")
 public class AdminController {
     private final AdminActService adminActService;
-    private final ValidationSortableField sortableField;
+    private final SortableFieldService sortableFieldService;
 
     @PostMapping("/create-user")
     public ResponseEntity<AuthenticationResponse> createUser(@RequestBody @Valid RegistrationRequest registrationRequest) {
@@ -83,7 +83,7 @@ public class AdminController {
             PagedResourcesAssembler<CardResponse> assembler
     )
     {
-        sortableField.validAdminCardFields(sortList);
+        sortableFieldService.validAdminCardFields(sortList);
         Page<CardResponse> cardPage = adminActService.getAllCards(filter, page, size, sortList, sortOrder);
         return ResponseEntity.ok(assembler.toModel(cardPage));
     }
@@ -97,7 +97,7 @@ public class AdminController {
             @RequestParam(defaultValue = "id") List<String> sortList,
             @RequestParam(defaultValue = "ASC") String sortOrder
     ) {
-        sortableField.validTransactionFields(sortList);
+        sortableFieldService.validTransactionFields(sortList);
         return ResponseEntity.ok(
                 null
 //                transactionService.getTransactionsByCard(cardId, transactionParamFilter, type, from, to, page, size, sortList, sortOrder)

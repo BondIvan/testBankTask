@@ -1,14 +1,15 @@
 package com.testtask.bankcardmanagement.controller;
 
 import com.testtask.bankcardmanagement.exception.other.InvalidSortFieldException;
-import org.springframework.stereotype.Component;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 
-@Component
-public class ValidationSortableField {
+@Service
+public class SortableFieldService {
     private final Set<String> user_sortableCardFields = Set.of("id", "status", "expirationDate");
     private final Set<String> admin_sortableCardFields = Set.of("id", "user.email", "status", "expirationDate");
     private final Set<String> sortableTransactionFields = Set.of("id", "type", "amount");
@@ -34,5 +35,12 @@ public class ValidationSortableField {
 
         if(sj.length() > 2) // sj contains '[' and ']'
             throw new InvalidSortFieldException("Sorting cards by these fields: " + sj +" are not supported.");
+    }
+
+    public List<Sort.Order> createSortOrder(List<String> sortList, String sortOrder) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(sortOrder);
+        return sortList.stream()
+                .map(field -> new Sort.Order(sortDirection, field))
+                .toList();
     }
 }
