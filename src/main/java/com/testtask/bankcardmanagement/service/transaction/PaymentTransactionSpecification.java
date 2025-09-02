@@ -50,6 +50,12 @@ public class PaymentTransactionSpecification {
         };
     }
 
+    public static Specification<AbstractPaymentTransaction> byType(String type) {
+        return (root, query, cb) -> (type != null) ?
+                cb.equal(root.get("transaction_type"), type) :
+                cb.conjunction();
+    }
+
     public static Specification<AbstractPaymentTransaction> byCreatedAt(Instant from, Instant to) {
         return (root, query, cb) -> {
             Predicate fromCreatedAtPredicate = (from != null) ?

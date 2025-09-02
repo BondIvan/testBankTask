@@ -31,6 +31,9 @@ public abstract class AbstractPaymentTransaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "transaction_type", insertable = false, updatable = false)
+    private String transaction_type;
+
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
