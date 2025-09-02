@@ -45,15 +45,6 @@ public class AdminCardService {
 
     public Page<CardResponse> getAllCards(CardParamFilter filter, Pageable pageable) {
         Page<Card> pageCards = cardService.getAllCards(filter, pageable);
-
-        List<CardResponse> listCardsResponse = pageCards.stream()
-                .map(cardMapper::toCardResponse)
-                .toList();
-
-        return new PageImpl<>(
-                listCardsResponse,
-                pageable,
-                pageCards.getTotalElements()
-        );
+        return pageCards.map(cardMapper::toCardResponse);
     }
 }

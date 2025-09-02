@@ -43,16 +43,8 @@ public class UserActService {
         );
 
         Page<Card> pageCards = cardService.getAllCards(filterByCurrentUser, pageable);
-
-        List<CardResponse> listCardResponse = pageCards.stream()
-                .map(cardMapper::toCardResponse)
-                .toList();
-
-        return new PageImpl<>(
-                listCardResponse,
-                pageable,
-                pageCards.getTotalElements()
-        );
+        
+        return pageCards.map(cardMapper::toCardResponse);
     }
 
     @Transactional
@@ -82,11 +74,7 @@ public class UserActService {
         Page<AbstractPaymentTransaction> pageTransactions =
                 transactionService.getAllTransactionsByCardId(cardId, filterByCurrentUser, pageable);
 
-        List<PaymentTransactionResponse> listTransactions = pageTransactions.stream()
-                .map(transactionMapper::toTransactionResponse)
-                .toList();
-
-        return new PageImpl<>(listTransactions, pageable, pageTransactions.getTotalElements());
+        return pageTransactions.map(transactionMapper::toTransactionResponse);
     }
 
     public Page<PaymentTransactionResponse> getTransactionsByAllCards(PaymentTransactionParamFilter transactionFilter,
