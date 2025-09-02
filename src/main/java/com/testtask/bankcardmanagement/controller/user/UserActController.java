@@ -86,6 +86,25 @@ public class UserActController {
 //        return null;
 //    }
 
+    @GetMapping("/transactions")
+    public ResponseEntity<PagedModel<EntityModel<PaymentTransactionResponse>>> getTransactionsByAllCards(
+            @Valid PaymentTransactionParamFilter filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") List<String> sortList,
+            @RequestParam(defaultValue = "ASC") String sortOrder,
+            PagedResourcesAssembler<PaymentTransactionResponse> assembler
+    ) {
+        sortableFieldService.validTransactionFields(sortList);
+        List<Sort.Order> sorted = sortableFieldService.createSortOrder(sortList, sortOrder);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sorted));
+        Page<PaymentTransactionResponse> pageResponse =
+                userActService.getTransactionsByAllCards(filter, pageable);
+
+        return ResponseEntity.ok(assembler.toModel(pageResponse));
+    }
+
     @GetMapping("/transactions/{cardId}")
     public ResponseEntity<PagedModel<EntityModel<PaymentTransactionResponse>>> getTransactionsByCard(
             @PathVariable("cardId") Long cardId,

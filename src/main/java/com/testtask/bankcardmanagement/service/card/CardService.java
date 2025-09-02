@@ -3,9 +3,9 @@ package com.testtask.bankcardmanagement.service.card;
 import com.testtask.bankcardmanagement.encrypt.AESEncryption;
 import com.testtask.bankcardmanagement.encrypt.hash.HashCardNumber;
 import com.testtask.bankcardmanagement.exception.card.CardBalanceException;
+import com.testtask.bankcardmanagement.exception.card.CardCreatingException;
 import com.testtask.bankcardmanagement.exception.card.CardDuplicateException;
 import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
-import com.testtask.bankcardmanagement.exception.card.CardCreatingException;
 import com.testtask.bankcardmanagement.exception.encryption.AESEncryptionException;
 import com.testtask.bankcardmanagement.exception.security.HashCardNumberException;
 import com.testtask.bankcardmanagement.exception.user.UserNotFoundException;
@@ -15,19 +15,16 @@ import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.enums.CardStatus;
-import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.repository.CardRepository;
 import com.testtask.bankcardmanagement.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,11 +33,10 @@ public class CardService {
     private final CardRepository cardRepository;
     private final AESEncryption aesEncryption;
     private final UserRepository userRepository;
-    private final CardMapper cardMapper;
     private final HashCardNumber hashCardNumber;
 
     @Transactional
-    public CardResponse createCard(CreateCardRequest request) {
+    public Card createCard(CreateCardRequest request) {
         Optional<User> optionalOwner = userRepository.findUserByEmail(request.ownerEmail());
         if(optionalOwner.isEmpty())
             throw new UserNotFoundException("User with such email not found.");
@@ -72,9 +68,7 @@ public class CardService {
         card.setCardHash(hashForNewCard);
         card.setBalance(BigDecimal.ZERO);
 
-        Card savedCard = cardRepository.save(card);
-
-        return cardMapper.toCardResponse(savedCard);
+        return cardRepository.save(card);
     }
 
     public Card getCardWithLimitsByUser(Long userId, Long cardId) {
@@ -89,17 +83,9 @@ public class CardService {
                 .orElseThrow(() -> new CardNotFoundException("The user does not have a card with such number."));
     }
 
-    public Page<CardResponse> getAllCards(CardParamFilter filter, Pageable pageable) {
-        Specification<Card> cardSpec = CardSpecification.build(filter);
-
-        List<CardResponse> foundCards = cardRepository.findAll(cardSpec, pageable).stream()
-                .map(cardMapper::toCardResponse)
-                .toList();
-
-        return new PageImpl<>(
-                foundCards,
-                pageable,
-                foundCards.size());
+    public Page<Card> getAllCards(CardParamFilter filter, Pageable pageable) {
+        Specification<Card> spec = CardSpecification.build(filter);
+        return cardRepository.findAll(spec, pageable);
     }
 
     public CardResponse blockCard(Long id) {

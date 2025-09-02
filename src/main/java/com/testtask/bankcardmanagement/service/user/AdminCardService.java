@@ -1,30 +1,38 @@
 package com.testtask.bankcardmanagement.service.user;
 
 import com.testtask.bankcardmanagement.exception.security.AccessDeniedException;
+import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.card.CreateCardRequest;
 import com.testtask.bankcardmanagement.model.enums.UserRole;
+import com.testtask.bankcardmanagement.model.mapper.CardMapper;
 import com.testtask.bankcardmanagement.service.card.CardService;
 import com.testtask.bankcardmanagement.service.security.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AdminCardService {
     private final CardService cardService;
     private final SecurityService securityService;
+    private final CardMapper cardMapper;
 
     public CardResponse createCard(CreateCardRequest request) {
         User currenntUser = securityService.getCurrentUser();
         if(currenntUser.getRole() != UserRole.ADMIN)
             throw new AccessDeniedException("Only admin can create card");
 
-        return cardService.createCard(request);
+        Card newCard = cardService.createCard(request);
+
+        return cardMapper.toCardResponse(newCard);
     }
 
     public void deleteCard(Long cardId) {
@@ -36,6 +44,16 @@ public class AdminCardService {
     }
 
     public Page<CardResponse> getAllCards(CardParamFilter filter, Pageable pageable) {
-        return cardService.getAllCards(filter, pageable);
+        Page<Card> pageCards = cardService.getAllCards(filter, pageable);
+
+        List<CardResponse> listCardsResponse = pageCards.stream()
+                .map(cardMapper::toCardResponse)
+                .toList();
+
+        return new PageImpl<>(
+                listCardsResponse,
+                pageable,
+                pageCards.getTotalElements()
+        );
     }
 }

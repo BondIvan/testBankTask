@@ -23,6 +23,19 @@ public class TransactionService {
         Specification<AbstractPaymentTransaction> spec = PaymentTransactionSpecification
                 .byCardId(cardId)
                 .and(PaymentTransactionSpecification.byUserId(filter.userId()))
+                .and(PaymentTransactionSpecification.byType(filter.type()))
+                .and(PaymentTransactionSpecification.byCreatedAt(filter.fromDateAsInstant(clock), filter.toDateAsInstant(clock)))
+                .and(PaymentTransactionSpecification.byAmount(filter.fromAmount(), filter.toAmount()));
+
+        return transactionRepository.findAll(spec, pageable);
+    }
+
+    public Page<AbstractPaymentTransaction> getTransactionsByAllCards(PaymentTransactionParamFilter filter,
+                                                                       Pageable pageable) {
+
+        Specification<AbstractPaymentTransaction> spec = PaymentTransactionSpecification
+                .byUserId(filter.userId())
+                .and(PaymentTransactionSpecification.byType(filter.type()))
                 .and(PaymentTransactionSpecification.byCreatedAt(filter.fromDateAsInstant(clock), filter.toDateAsInstant(clock)))
                 .and(PaymentTransactionSpecification.byAmount(filter.fromAmount(), filter.toAmount()));
 
