@@ -1,5 +1,6 @@
 package com.testtask.bankcardmanagement.service.user;
 
+import com.testtask.bankcardmanagement.exception.card.CardNotFoundException;
 import com.testtask.bankcardmanagement.model.Card;
 import com.testtask.bankcardmanagement.model.User;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
@@ -18,7 +19,6 @@ import com.testtask.bankcardmanagement.service.security.SecurityService;
 import com.testtask.bankcardmanagement.service.transaction.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +70,10 @@ public class UserActService {
                 filter.fromDate(),
                 filter.toDate()
         );
+
+        boolean isUserHaveCard = cardService.isCardBelongsToUser(currentUser.getId(), cardId);
+        if(!isUserHaveCard)
+            throw new CardNotFoundException("The user does not have a card with such id");
 
         Page<AbstractPaymentTransaction> pageTransactions =
                 transactionService.getAllTransactionsByCardId(cardId, filterByCurrentUser, pageable);

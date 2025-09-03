@@ -20,6 +20,9 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
     @Query(value = "SELECT COUNT(c) > 0 FROM Card c WHERE c.user.id = :userId AND c.cardHash = :hashNumber")
     boolean existByUserAndHashNumber(@Param("userId") Long userId, @Param("hashNumber") String hashNumber);
 
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM Card c WHERE c.id = :cardId AND c.user.id = :userId)")
+    boolean checkIsCardBelongsToUser(@Param("userId") Long userId, @Param("cardId") Long cardId);
+
     @Query(value = "SELECT c FROM Card c WHERE c.id = :cardId")
     Optional<Card> findCardById(@Param("cardId") Long cardId);
 

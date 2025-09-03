@@ -88,6 +88,10 @@ public class CardService {
         return cardRepository.findAll(spec, pageable);
     }
 
+    public boolean isCardBelongsToUser(Long userId, Long cardId) {
+        return cardRepository.checkIsCardBelongsToUser(userId, cardId);
+    }
+
     public CardResponse blockCard(Long id) {
         return null;
     }
