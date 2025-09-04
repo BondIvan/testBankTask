@@ -60,4 +60,19 @@ public class AdminActController {
 
         return ResponseEntity.ok(assembler.toModel(pageResponse));
     }
+
+    @GetMapping("/transactions")
+    public ResponseEntity<PagedModel<EntityModel<PaymentTransactionResponse>>> getTransactionsByAllCards(
+            @Valid PaymentTransactionParamFilter filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") List<String> sortList,
+            @RequestParam(defaultValue = "ASC") String sortOrder,
+            PagedResourcesAssembler<PaymentTransactionResponse> assembler
+    ) {
+        Pageable pageable = pageableService.createTransactionPageable(page, size, sortList, sortOrder);
+        Page<PaymentTransactionResponse> pageResponse = adminActService.getTransactionsByAllCards(filter, pageable);
+
+        return ResponseEntity.ok(assembler.toModel(pageResponse));
+    }
 }

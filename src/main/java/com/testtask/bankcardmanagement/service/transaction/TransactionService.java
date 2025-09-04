@@ -41,4 +41,15 @@ public class TransactionService {
 
         return transactionRepository.findAll(spec, pageable);
     }
+
+    public Page<AbstractPaymentTransaction> getTransactionsByAllCardsByAdmin(PaymentTransactionParamFilter filter,
+                                                                             Pageable pageable) {
+
+        Specification<AbstractPaymentTransaction> spec = PaymentTransactionSpecification
+                .byType(filter.type())
+                .and(PaymentTransactionSpecification.byCreatedAt(filter.fromDateAsInstant(clock), filter.toDateAsInstant(clock)))
+                .and(PaymentTransactionSpecification.byAmount(filter.fromAmount(), filter.toAmount()));
+
+        return transactionRepository.findAll(spec, pageable);
+    }
 }

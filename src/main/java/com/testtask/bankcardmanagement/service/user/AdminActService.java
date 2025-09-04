@@ -45,6 +45,17 @@ public class AdminActService {
         return pageTransactions.map(transactionMapper::toTransactionResponse);
     }
 
+    public Page<PaymentTransactionResponse> getTransactionsByAllCards(PaymentTransactionParamFilter filter, Pageable pageable) {
+        User currentUser = securityService.getCurrentUser();
+        if(currentUser.getRole() != UserRole.ADMIN)
+            throw new AccessDeniedException("Only admin can get transactions by all card");
+
+        Page<AbstractPaymentTransaction> pageTransactions =
+                transactionService.getTransactionsByAllCardsByAdmin(filter, pageable);
+
+        return pageTransactions.map(transactionMapper::toTransactionResponse);
+    }
+
     public Page<CardResponse> getAllCards(CardParamFilter filter, Pageable pageable) {
         Page<Card> pageCards = cardService.getAllCards(filter, pageable);
         return pageCards.map(cardMapper::toCardResponse);
