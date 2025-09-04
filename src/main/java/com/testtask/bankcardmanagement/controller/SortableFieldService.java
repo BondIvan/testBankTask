@@ -12,7 +12,7 @@ import java.util.StringJoiner;
 public class SortableFieldService {
     private final Set<String> user_sortableCardFields = Set.of("id", "status", "expirationDate");
     private final Set<String> admin_sortableCardFields = Set.of("id", "user.email", "status", "expirationDate");
-    private final Set<String> sortableTransactionFields = Set.of("id", "type", "amount");
+    private final Set<String> sortableTransactionFields = Set.of("id", "transactionType", "amount");
 
     public void validCardFields(List<String> sortList) {
         validFields(user_sortableCardFields, sortList);

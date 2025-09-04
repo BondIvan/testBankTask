@@ -32,7 +32,7 @@ public abstract class AbstractPaymentTransaction {
     private Long id;
 
     @Column(name = "transaction_type", insertable = false, updatable = false)
-    private String transaction_type;
+    private String transactionType;
 
     @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
