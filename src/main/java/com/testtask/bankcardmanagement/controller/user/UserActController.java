@@ -1,6 +1,6 @@
 package com.testtask.bankcardmanagement.controller.user;
 
-import com.testtask.bankcardmanagement.controller.SortableFieldService;
+import com.testtask.bankcardmanagement.controller.PageableService;
 import com.testtask.bankcardmanagement.model.dto.card.CardParamFilter;
 import com.testtask.bankcardmanagement.model.dto.card.CardResponse;
 import com.testtask.bankcardmanagement.model.dto.limit.LimitResponse;
@@ -13,9 +13,7 @@ import com.testtask.bankcardmanagement.service.user.UserActService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
@@ -37,7 +35,7 @@ import java.util.List;
 @RequestMapping("/api/v1/user/")
 public class UserActController {
     private final UserActService userActService;
-    private final SortableFieldService sortableFieldService;
+    private final PageableService pageableService;
 
     @PutMapping("/card/{cardId}/limit")
     public ResponseEntity<List<LimitResponse>> updateCardLimit(
@@ -65,13 +63,10 @@ public class UserActController {
             PagedResourcesAssembler<CardResponse> assembler
     )
     {
-        sortableFieldService.validCardFields(sortList);
-        List<Sort.Order> sorted = sortableFieldService.createSortOrder(sortList, sortOrder);
+        Pageable pageable = pageableService.createCardPageable(page, size, sortList, sortOrder);
+        Page<CardResponse> pageResponse = userActService.getAllCards(filter, pageable);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sorted));
-        Page<CardResponse> cardPage = userActService.getAllCards(filter, pageable);
-
-        return ResponseEntity.ok(assembler.toModel(cardPage));
+        return ResponseEntity.ok(assembler.toModel(pageResponse));
     }
 
     @PostMapping("/request-block-card")
@@ -95,12 +90,8 @@ public class UserActController {
             @RequestParam(defaultValue = "ASC") String sortOrder,
             PagedResourcesAssembler<PaymentTransactionResponse> assembler
     ) {
-        sortableFieldService.validTransactionFields(sortList);
-        List<Sort.Order> sorted = sortableFieldService.createSortOrder(sortList, sortOrder);
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sorted));
-        Page<PaymentTransactionResponse> pageResponse =
-                userActService.getTransactionsByAllCards(filter, pageable);
+        Pageable pageable = pageableService.createTransactionPageable(page, size, sortList, sortOrder);
+        Page<PaymentTransactionResponse> pageResponse = userActService.getTransactionsByAllCards(filter, pageable);
 
         return ResponseEntity.ok(assembler.toModel(pageResponse));
     }
@@ -115,10 +106,7 @@ public class UserActController {
             @RequestParam(defaultValue = "ASC") String sortOrder,
             PagedResourcesAssembler<PaymentTransactionResponse> assembler
     ) {
-        sortableFieldService.validTransactionFields(sortList);
-        List<Sort.Order> sorted = sortableFieldService.createSortOrder(sortList, sortOrder);
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sorted));
+        Pageable pageable = pageableService.createTransactionPageable(page, size, sortList, sortOrder);
         Page<PaymentTransactionResponse> pageResponse = userActService.getAllTransactionsByCardId(cardId, filter, pageable);
 
         return ResponseEntity.ok(assembler.toModel(pageResponse));

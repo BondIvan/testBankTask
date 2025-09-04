@@ -71,7 +71,7 @@ public class UserActService {
                 filter.toDate()
         );
 
-        boolean isUserHaveCard = cardService.isCardBelongsToUser(currentUser.getId(), cardId);
+        boolean isUserHaveCard = cardService.checkIsCardBelongsToUser(currentUser.getId(), cardId);
         if(!isUserHaveCard)
             throw new CardNotFoundException("The user does not have a card with such id");
 

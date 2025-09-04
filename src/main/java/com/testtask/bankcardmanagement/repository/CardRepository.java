@@ -23,6 +23,8 @@ public interface CardRepository extends JpaRepository<Card, Long>, JpaSpecificat
     @Query(value = "SELECT EXISTS(SELECT 1 FROM Card c WHERE c.id = :cardId AND c.user.id = :userId)")
     boolean checkIsCardBelongsToUser(@Param("userId") Long userId, @Param("cardId") Long cardId);
 
+    boolean existsById(Long cardId);
+
     @Query(value = "SELECT c FROM Card c WHERE c.id = :cardId")
     Optional<Card> findCardById(@Param("cardId") Long cardId);
 
